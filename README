@@ -33,8 +33,11 @@ Cell A1 on sheet 'Sheet1' of file foo.xls is: \inccell{foo.xls!Sheet1!A1}
 this is as easy as including single cells. Look at the following tabular.
 
 \begin{tabular}{lll}
-  column 1 & colum 2 & colum 3  \\
-  \inctab{foo.xls!Sheet1!A1!C5} \\
+  \hline
+  column 1 & colum 2 & colum 3 \\
+  \hline
+  \inctab{foo.xls!Sheet1!A1!C5}
+  \hline
 \end{tabular}
 
 \end{document}
@@ -68,7 +71,7 @@ and the manpages to /usr/local/man.
 Debian users just need to put the following to their sources.list and apt-
 get installing it:
 
-deb deb http://www.physik.uni-freiburg.de/~doerr/exceltex/download ./
+deb deb http://www.physik.uni-freiburg.de/~doerr/debian/ ./
 
 
 

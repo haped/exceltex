@@ -10,12 +10,10 @@ Section: tex
 Architecture: all
 Depends: libspreadsheet-parseexcel-perl, tetex-base
 Pre-Depends: perl
-Description: includes cells from excel files in latex documents
- Exceltex includes cells from excel files in latex documents.
- .
- Exceltex consists of a LaTeX package providing two commands to include cells and cell
- ranges from excel files and a perlscript which actually extracts the ordered data 
- from the excel file.
+Description: includes cells from Excel files in LaTeX documents
+ Exceltex consists of a LaTeX package providing two commands to include cells
+ and cell-ranges, and a perlscript which actually extracts the ordered data
+ from the Excel file.
  .
  A simple example is the following:
  .
@@ -27,4 +25,5 @@ Description: includes cells from excel files in latex documents
  .
  now, just run latex the first time, then exceltex and then latex again.
  .
- look at http://www.physik.uni-freiburg.de/~doerr/exceltex for further information
+ look at http://www.physik.uni-freiburg.de/~doerr/exceltex for further
+ information.

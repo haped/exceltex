@@ -1,6 +1,6 @@
 \documentclass{article}
-\usepackage{exceltex}
-%\usepackage{myexceltex}
+\input{../exceltex.sty}
+
 
 \begin{document}
 
@@ -34,8 +34,11 @@
 \subsection{decimal number table}
 
 \begin{tabular}{rrrr}
+  \hline
   A & B & C & D \\
-  \inctab{Sheet1!F6!I12} \\
+  \hline
+  \inctab{Sheet1!F6!I12}
+  \hline
 \end{tabular}
 
 
@@ -43,31 +46,43 @@
 \subsection{scinetific number table}
 
 \begin{tabular}{rrrr}
+  \hline
   A & B & C & D \\
-  \inctab{Sheet1!A13!D18} \\
+  \hline
+  \inctab{Sheet1!A13!D18}
+  \hline
 \end{tabular}
 
 
 \subsection{scientific number  table with emtpy cells}
 
 \begin{tabular}{rrrr}
+  \hline
   A & B & C & D \\
-  \inctab{Sheet1!A22!D27} \\
+  \hline
+  \inctab{Sheet1!A22!D27}
+  \hline
 \end{tabular}
 
 
 \subsection{mixed math-text table}
 
 \begin{tabular}{rrrr}
+  \hline
   A & B & C & D \\
-  \inctab{Sheet1!A30!D34} \\
+  \hline
+  \inctab{Sheet1!A30!D34}
+  \hline
 \end{tabular}
 
 \subsection{text table}
 
 \begin{tabular}{rrrr}
+  \hline
   F & G & H & I \\
+  \hline
   \inctab{Sheet1!F14!I18}
+  \hline
 \end{tabular}
 
 \end{document}

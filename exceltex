@@ -191,7 +191,7 @@ package main;
 
 use strict;
 
-my $VERSION = "0.3.3";
+my $VERSION = "0.3.4";
 
 # globals
 my $WORKBOOKS = {};
@@ -336,7 +336,7 @@ sub writeBuf
 sub getFile
 {
     my $file = undef;
-    if ( -f "$JOBNAME.xls")  { $file = "$JOBNAME.xls"      }
+    if ( -f "$JOBNAME.xls")  { $file = "$JOBNAME.xls"  }
 
     return $file;
 }
@@ -388,7 +388,7 @@ sub getCell
 
     ++$MATCHES;
     ++$NUM_CELLS;
-    #   print "c";
+
     return parseVal($value);
 }
 
@@ -440,11 +440,9 @@ sub getTable
 	  $buf .= parseVal($val);
 	  $buf .= " & " if ($x < $rtx);
       }
-      # don't append \\ on the last line
-      $buf .= " \\\\\n" if ($y < $loy);
+      $buf .= " \\\\\n";
   }
 
-  #  print "t";
   ++$MATCHES;
   ++$NUM_TABS;
   return $buf;

@@ -1,31 +1,27 @@
 % exceltex.sty
 % allows easy and transparent inclusion of contents of excel files in 
 % latex documents.
-% (C) 2004 by Hans-Peter Doerr <doerr AT cip DOT physik DOT uni-freiburg DOT de>
+% (C) 2004, 2005 by Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{exceltex}[2004/10/19 includes contents of Excel files]
-\RequirePackage{color}
+\ProvidesPackage{exceltex}[2005/10/19 includes cells from Excel files]
 
-
-\newcounter{exceltexcountercel}
-\newcounter{exceltexcountertab}
-\setcounter{exceltexcountercel}{0}
-\setcounter{exceltexcountertab}{0}
+\newcounter{exceltexCounterCel}
+\newcounter{exceltexCounterTab}
+\setcounter{exceltexCounterCel}{0}
+\setcounter{exceltexCounterTab}{0}
 
 \def\filename{\jobname-exceltex.idx}
 \immediate\openout 10=\filename
 
-
 \newcommand{\inccell}[1]{%
-  \InputIfFileExists{.exceltex-\jobname-c-\theexceltexcountercel}{}{}%
-  \immediate\write 10{\theexceltexcountercel:c:#1}%
-  \stepcounter{exceltexcountercel}%
+  \stepcounter{exceltexCounterCel}%
+  \immediate\write 10{\theexceltexCounterCel:c:#1}%
+  \InputIfFileExists{.exceltex-\jobname-c-\theexceltexCounterCel}{}{}%
 }%
 
-
 \newcommand{\inctab}[1]{%
-  \InputIfFileExists{.exceltex-\jobname-t-\theexceltexcountertab}{}{}%
-  \immediate\write 10{\theexceltexcountertab:t:#1}%
-  \stepcounter{exceltexcountertab}%
+  \stepcounter{exceltexCounterTab}%
+  \immediate\write 10{\theexceltexCounterTab:t:#1}%
+  \InputIfFileExists{.exceltex-\jobname-t-\theexceltexCounterTab}{}{\\}%
 }%

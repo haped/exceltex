@@ -6,5 +6,5 @@ and themanpages to /usr/local/man.
 Debian users just need to put the following to their sources.list and apt-
 get installing it:
 
-deb deb http://www.physik.uni-freiburg.de/~doerr/exceltex/download ./
+deb deb http://www.physik.uni-freiburg.de/~doerr/debian/ ./
 
