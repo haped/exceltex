@@ -1,0 +1,30 @@
+Source: exceltex
+Section: tex
+Priority: optional
+Maintainer: Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.1
+
+Package: exceltex
+Section: tex
+Architecture: all
+Depends: libspreadsheet-parseexcel-perl, tetex-base
+Pre-Depends: perl
+Description: includes cells from excel files in latex documents
+ Exceltex includes cells from excel files in latex documents.
+ .
+ Exceltex consists of a LaTeX package providing two commands to include cells and cell
+ ranges from excel files and a perlscript which actually extracts the ordered data 
+ from the excel file.
+ .
+ A simple example is the following:
+ .
+ % ...
+ \usepackage{exceltex}
+ % ...
+ value in cell A1 is: \inccell{foo.xls!Sheet1!A1}
+ % ...
+ .
+ now, just run latex the first time, then exceltex and then latex again.
+ .
+ look at http://www.physik.uni-freiburg.de/~doerr/exceltex for further information

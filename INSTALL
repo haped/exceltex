@@ -1,0 +1,10 @@
+There is a Makefile in which you should edit BIN TEXMF and MANPATH to your
+needs and then run 'make install'. The default setting installs the binary
+to /usr/local/bin, exceltex.sty to /usr/local/share/texmf/tex/latex/muisc,
+and themanpages to /usr/local/man.
+
+Debian users just need to put the following to their sources.list and apt-
+get installing it:
+
+deb deb http://www.physik.uni-freiburg.de/~doerr/exceltex/download ./
+

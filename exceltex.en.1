@@ -1,0 +1,55 @@
+.TH "EXCELTEX" "1" "2/2005" "Hans-Peter Doerr" ""
+.SH "NAME"
+exceltex \- includes cells from Excel\-files into LaTeX documents. 
+.SH "SYNOPSIS"
+\fBexceltex\fR [options] file
+.SH "DESCRIPTION"
+.LP 
+Exceltex allows the transparent inclusion of cells and cell\-ranges from M$ Excel files into LaTeX documents.
+
+.LP 
+Exceltex consists of a small LaTeX package and a perl\-script. The LaTeX package provides two simple commands for including single cells or cell\-ranges, the perl\-script extracts the ordered data from the spreadsheet\-file.
+
+.LP 
+Why the name exceltex? Because it currently only works with M$ Excel files. The simple reason is, that the SpreadSheet::ParseExcel was the first perl\-package for reading Spreadsheet files I found. Support for OO.org is may be possible, unfortunately support for Gnumeric is not possible (in an easy way), since it doesn't save any results of calculations, just the formulars.
+.SH "OPTIONS"
+.TP 
+\fB\-c|\-\-cleanup\fR
+removes any temporary files
+.SH "LATEX-COMMANDS"
+.LP 
+Exceltex provides two LaTeX commands to handle the import of cells.
+
+.TP 
+\fB\\inccell{File!Sheet!Cell}\fR
+includes the cell 'Cell' of the sheet 'Sheet' of the file 'File' at the current position. If the filename of the spreadsheet file is the same as your .tex file (except the extension, of course) you may omit 'File': \fB\\inccell{Sheet!Cell}\fR. 'Cell' is in the usual Spreadsheet\-coordinates, for example A1, or Z23.
+
+.TP 
+\fB\\incctab{File!Sheet!Cell1!Cell2}\fR
+includes the contents of a cell\-range between 'Cell1' (upper\-left) and 'Cell2' (lower\-right), separated by a &. Use this to import table\-data from the spreadsheet into your latex document. As above, you may omit 'File' if the filenames of spreadsheet file and .tex file are equal.
+.SH "USAGE"
+.LP 
+Mark cells and/or cell\-ranges of your spreadsheet file for inclusion in the latex\-document by using the LaTeX commands explained above.
+
+.LP 
+Run latex on your .tex file \- a index file is created, which tells the exceltex perl\-script what cells to extract from the spreadsheet file. Then run exceltex on your .tex file, which actually exctracts the data from the spreadsheet file. Then, run latex again, and all your ordered data should be included via LaTeX'  \\input{} command.
+.SH "REQUIREMENTS"
+the exceltex perl\-script needs depends on the \fBSpreadsheet::ParseExcel\fR perl\-package.
+.SH "LIMITATIONS"
+.LP 
+Exceltex uses SpreadSheet::ParseExcel for reading excelfiles, so all it's limitations and problems are applying to exceltex as well.
+
+.SH "FILES"
+.TP 
+\fBexceltex.sty\fR
+provides the latex package 'exceltex'
+.SH "COPYRIGHT"
+Copyright (C) 2004,2005 Hans\-Peter Doerr
+.br 
+exceltex is distributed under the terms of the GNU GENERAL PUBLIC LICENSE
+
+This is free software; see the source for copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+.SH "AUTHOR"
+written by Hans\-Peter Doerr <doerr@cip.physik.uni\-freiburg.de>
+

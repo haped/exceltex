@@ -1,0 +1,451 @@
+#!/usr/bin/perl -w
+
+package utils;
+
+my %LtoN;
+
+sub initL2N
+{
+    my $i = 1;
+    for ('A' .. 'Z') { $LtoN{$_} = $i; ++$i }
+}
+
+initL2N();
+
+#-------------------------------------------------------------------------------
+sub cell2Coords
+{
+    my ($cell) = @_;
+
+    $cell = uc($cell);
+    return undef if (! ($cell =~ m/^([A-Z]+)([0-9]+)$/));
+
+    my $col = letter2number($1);
+    my $row = $2 - 1;
+
+    return ($col, $row);
+}
+
+#-------------------------------------------------------------------------------
+sub coords2cell
+{
+    my ($x, $y) = @_;
+
+    ++$y;
+    my $cell = number2letter($x) .  "$y";
+    return $cell;
+}
+
+#-------------------------------------------------------------------------------
+sub letter2number
+{
+    my ($l) = @_;
+
+    my $len = length($l);
+    my @S   = split //, $l;
+
+    my $n = 0;
+
+    if ($len == 1) { $n =  $LtoN{$l} - 1 }
+    if ($len == 2) { $n =  26 * $LtoN{$S[0]} + $LtoN{$S[1]} - 1 }
+
+    return $n;
+}
+
+
+#-------------------------------------------------------------------------------
+sub number2letter
+{
+    my ($n) = @_;
+
+    my @L;
+    for ('A' .. 'Z') { push(@L, $_) }
+    my $l;
+
+    if ($n > 25) { $l =  "$L[int($n/26)-1]" . "$L[$n % 26]" }
+    else { $l =  "$L[$n]" }
+
+    return $l;
+}
+
+# testing section
+
+# sub testn2l
+# {
+#     my ($n, $should) = @_;
+
+#     print "number2letter($n) == $should : ";
+#     my $res = number2letter($n);
+#     if ($res ne $should) { print "FAILED (result: $res)\n" }
+#     else { print "OK\n" }
+# }
+
+# sub testl2n
+# {
+#     my ($l, $should) = @_;
+
+#     print "letter2number($l) == $should : ";
+#     my $res = letter2number($l);
+#     if ($res != $should) { print "FAILED (result: $res)\n" }
+#     else { print "OK\n" }
+# }
+
+# sub test
+# {
+#     testn2l(0, 'A');
+#     testl2n('A', 0);
+#     testn2l(1, 'B');
+#     testl2n('B', 1);
+#     testn2l(25, 'Z');
+#     testl2n('Z', 25);
+#     testn2l(26, 'AA');
+#     testl2n('AA', 26);
+#     testn2l(27, 'AB');
+#     testl2n('AB', 27);
+#     testn2l(28, 'AC');
+#     testl2n('AC', 28);
+#     testn2l(51, 'AZ');
+#     testl2n('AZ', 51);
+#     testn2l(52, 'BA');
+#     testl2n('BA', 52);
+#     testn2l(53, 'BB');
+#     testl2n('BB', 53);
+
+#     testn2l(111, 'DH');
+#     testl2n('DH', 111);
+
+# }
+
+
+
+
+package myParseExcel;
+
+use strict;
+use Spreadsheet::ParseExcel;
+
+
+#-------------------------------------------------------------------------------
+sub new
+{
+    my ($class, $file) = @_;
+
+    my $self = {};
+    $self->{ERROR} = "";
+    if (! -f $file) {
+	print "Error : file '$file' does not exists. aborting.\n";
+	exit 1;
+    }
+    $self->{book} = new Spreadsheet::ParseExcel::Workbook->Parse($file);
+    if (! defined($self->{book}))
+    {
+	print "Error : couldn't parse file '$file' : $1. aborting.\n";
+	exit 1;
+    }
+    
+    $self->{file} = $file;
+    bless $self, $class;
+    return $self;
+}
+
+#-------------------------------------------------------------------------------
+sub getCellContent
+{
+    my ($self, $sheet, $x, $y) = @_;
+
+    if (@_ == 3)
+    {
+	($x, $y) = utils::cell2Coords($x);
+    }
+
+    my $ws = $self->{book}->Worksheet($sheet);
+
+    if (! defined($ws)) {
+	$self->{ERROR} = "sheet '$self->{file}!$sheet' does not exist";
+	return undef;
+    }
+
+    my $cl = $ws->Cell($y, $x);
+
+    if (! defined($cl)) {
+	$self->{ERROR} = "cell '$sheet!" . utils::coords2cell($x,$y) . "' is out of range";
+	return undef;
+    }
+
+    return $cl->Value();
+}
+
+sub error
+{
+    my $self = shift;
+    my $err = $self->{ERROR};
+    $self->{ERROR} = "";
+    return $err;
+}
+
+
+
+
+
+package main;
+
+use strict;
+
+my $VERSION = "0.3.3";
+
+# globals
+my $WORKBOOKS = {};
+my $WARNINGS  = 0;
+my $MATCHES   = 0;
+my $NUM_CELLS = 0;
+my $NUM_TABS  = 0;
+my $UNKNOWN_CELLS = 0;
+
+
+if (@ARGV == 0) { usage(); exit 1 }
+
+my $file = $ARGV[0];
+
+# determine jobname of the latexfile (filename without extension)
+my $JOBNAME = $file;
+if ( $file =~ m/^(.+)\.tex$/ ) { $JOBNAME = $1 }
+
+my $INPUT_PREFIX = ".exceltex-$JOBNAME-";
+my $INDEXFILE    = "$JOBNAME-exceltex.idx";
+
+if ($ARGV[0] eq "-c" || $ARGV[0] eq "--cleanup")
+{
+    print "cleaning up ... \n";
+    cleanup();
+    exit 0;
+}
+
+if ($ARGV[0] eq "-h" || $ARGV[0] eq "--help") { usage(); exit }
+cleanup();
+
+
+print "This is exceltex, version $VERSION\n";
+
+if (! open(I, "< $INDEXFILE")) {
+    print STDERR "Error:  couldn't read index '$INDEXFILE' : $!\n";
+    print STDERR "Maybe you need to run latex first. aborting.\n";
+    exit 1;
+}
+
+print "Indexfile is: $INDEXFILE\n";
+
+
+# process index, and create files with cell-contents
+while(<I>)
+{
+    my $line = $_;
+    chomp($line);
+
+    my ($idx, $type, $source) = split(':', $line);
+    my @SRC = split('!', $source);
+
+    if    ($type eq "t") {
+	writeBuf($idx, "t", getTable(@SRC));
+    }
+    elsif ($type eq "c"){
+	writeBuf($idx, "c", getCell(@SRC));
+    }
+    else
+    {
+	print STDERR "Error : indexfile '$INDEXFILE' is corrupt. rerun latex\n";
+	exit 1;
+    }
+}
+close(I);
+
+
+if ($MATCHES) {
+    print "done with $MATCHES matches ($NUM_CELLS cells and $NUM_TABS tabulars)\n";
+}else {
+    print "exeltex finished without any matches\n";
+    exit 0;
+}
+if ($WARNINGS){
+    print "Warning : not all matches processed fine, there were $WARNINGS warnings\n";
+    exit 1;
+}
+
+exit 0;
+
+
+
+#-------------------------------------------------------------------------------
+sub usage
+{
+    print "exceltex version $VERSION\n";
+    print "usage: exceltex [options] file[.tex]\n";
+    print "options:\n";
+    print "  -c|--cleanup    removes all temporary files\n";
+    print "\n";
+}
+
+#-------------------------------------------------------------------------------
+sub cleanup
+{
+   unlink <.exceltex-*>;
+}
+
+#-------------------------------------------------------------------------------
+sub getWorkbook
+{
+    my ($file) = @_;
+
+    # cache new workbooks
+    if (! $WORKBOOKS->{$file})
+    {
+	my $filetype = undef;
+	if ($file =~ m/^.+\.(.+)$/) { $filetype = $1 }
+
+	if   ($filetype eq "xls")  {
+	    print "reading file $file\n";
+	    $WORKBOOKS->{$file} = myParseExcel->new($file);
+	}
+	else {
+	    print STDERR "Error : sorry, '$filetype' files are not supported!\n";
+	    print STDERR "aborting.\n";
+	    exit 1;
+	}
+    }
+
+    return $WORKBOOKS->{$file};
+}
+
+#-------------------------------------------------------------------------------
+sub writeBuf
+{
+    my ($idx, $type, $buff) = @_;
+
+    my $wfile = $INPUT_PREFIX . "$type-" . $idx;
+    if (! open (O, ">$wfile"))
+    {
+	print STDERR "Error : couldn't write '$wfile' : $!\n";
+	print STDERR "aborting.\n";
+	exit 1;
+    }
+
+    print O $buff;
+    close O;
+}
+
+#-------------------------------------------------------------------------------
+sub getFile
+{
+    my $file = undef;
+    if ( -f "$JOBNAME.xls")  { $file = "$JOBNAME.xls"      }
+
+    return $file;
+}
+
+#-------------------------------------------------------------------------------
+sub parseVal
+{
+    my ($value) = @_;
+    my $MATH = 0;
+
+    return "" if (! defined($value));
+    return $value if ($value =~ m/^\d$/);
+
+    if ($value =~ s/(\w+)_(\w+)/$1_{$2}/g) { $MATH = 1 }
+    $value =~ s/%/\\%/g;
+    $value =~ s/#/\\#/g;
+
+    # replace 3E+3 by 3\cdot10^{3}
+    # replace 3E-3 by 3\cdot10^{-3}
+    if ($value =~ s/([0-9]+)([eE])[+]([0-9]+)/$1 \\cdot 10^{$3}/g) {$MATH = 1}
+    if ($value =~ s/([0-9]+)([eE])([-][0-9]+)/$1 \\cdot 10^{$3}/g) {$MATH = 1}
+
+    return "\$$value\$" if ($MATH);
+    return $value;
+}
+
+
+
+#-------------------------------------------------------------------------------
+sub getCell
+{
+    my ($file, $sheet, $cell) = @_;
+
+    if (@_ == 2)
+    {
+	$file = getFile();
+	$sheet = $_[0];
+	$cell  = $_[1];
+    }
+
+    $cell = uc($cell);
+
+    my $value = getWorkbook($file)->getCellContent($sheet, $cell);
+
+    if (! defined($value)){
+	++$WARNINGS;
+	print "Warning : " . getWorkbook($file)->error() . "\n";
+    }
+
+    ++$MATCHES;
+    ++$NUM_CELLS;
+    #   print "c";
+    return parseVal($value);
+}
+
+
+
+#-------------------------------------------------------------------------------
+sub getTable
+{
+  my ($file, $sheet, $cell1, $cell2) = @_;
+
+  # called with only 3 arguments means no file was given
+  if (@_ == 3)
+  {
+      $cell2 = $cell1;
+      $cell1 = $sheet;
+      $sheet = $file;
+      $file  = getFile();
+  }
+
+  # cell1 is upper-left and cell2 is lower-right corner
+  # of the selected cell-range
+  my ($lfx, $upy) = utils::cell2Coords($cell1);
+  my ($rtx, $loy) = utils::cell2Coords($cell2);
+
+  if (! defined($lfx)) {
+      print  "Warning : '$cell1' is no valid cell coordinate\n";
+      ++$WARNINGS;
+      return undef;
+  }
+  if (! defined($rtx)) {
+      print  "Warning : '$cell2' is no valid cell coordinate\n";
+      ++$WARNINGS;
+      return undef;
+  }
+
+  my $book = getWorkbook($file);
+  my $buf;
+
+  for (my $y = $upy; $y <= $loy; ++$y)
+  {
+      for (my $x = $lfx; $x <= $rtx; ++$x)
+      {
+	  my $val = $book->getCellContent($sheet, $x, $y);
+	  if (! defined($val))
+	  {
+	      ++$WARNINGS;
+	      print "Warning : " . getWorkbook($file)->error() . "\n";
+	  }
+	  $buf .= parseVal($val);
+	  $buf .= " & " if ($x < $rtx);
+      }
+      # don't append \\ on the last line
+      $buf .= " \\\\\n" if ($y < $loy);
+  }
+
+  #  print "t";
+  ++$MATCHES;
+  ++$NUM_TABS;
+  return $buf;
+}

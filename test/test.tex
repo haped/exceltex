@@ -1,0 +1,73 @@
+\documentclass{article}
+\usepackage{exceltex}
+%\usepackage{myexceltex}
+
+\begin{document}
+
+\section{including cells}
+
+
+\begin{description}
+\item[Sheet3!A1 (0) :]  \inccell{Sheet3!A1}
+\item[Sheet3!Z1 (25) :] \inccell{test.xls!Sheet3!Z1}
+\item[Sheet3!AA1(26) :] \inccell{Sheet3!AA1}
+\item[Sheet3!AB1(27) :] \inccell{Sheet3!AB1}
+\item[Sheet3!AZ1(51) :] \inccell{Sheet3!AZ1}
+\item[Sheet3!IV9999(IV9999) :] \inccell{Sheet3!IV9999}
+\item[Sheet3!IV10000(out of range) :] \inccell{Sheet3!IV10000}
+
+\end{description}
+
+
+\begin{description}
+\item[Sheet1!A1 (A1) :] \inccell{Sheet1!A1}
+\item[Sheet1!a1 (A1) :] \inccell{test.xls!Sheet1!a1}
+\item[sheet1!a1 (sheet1 does not exists) :] \inccell{sheet1!a1}
+\item[Sheet99!A1 (Sheet99 does not exists):] \inccell{Sheet99!A1}
+\item[Sheet1!C9 (9.00) :] \inccell{Sheet1!C9}
+\item[Sheet1!C10 (empty) :] \inccell{Sheet1!C10}
+\end{description}
+
+
+\section{tables}
+
+\subsection{decimal number table}
+
+\begin{tabular}{rrrr}
+  A & B & C & D \\
+  \inctab{Sheet1!F6!I12} \\
+\end{tabular}
+
+
+
+\subsection{scinetific number table}
+
+\begin{tabular}{rrrr}
+  A & B & C & D \\
+  \inctab{Sheet1!A13!D18} \\
+\end{tabular}
+
+
+\subsection{scientific number  table with emtpy cells}
+
+\begin{tabular}{rrrr}
+  A & B & C & D \\
+  \inctab{Sheet1!A22!D27} \\
+\end{tabular}
+
+
+\subsection{mixed math-text table}
+
+\begin{tabular}{rrrr}
+  A & B & C & D \\
+  \inctab{Sheet1!A30!D34} \\
+\end{tabular}
+
+\subsection{text table}
+
+\begin{tabular}{rrrr}
+  F & G & H & I \\
+  \inctab{Sheet1!F14!I18}
+\end{tabular}
+
+\end{document}
