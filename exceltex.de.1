@@ -1,58 +1,90 @@
-.TH "EXCELTEX" "1" "2/2005" "Hans-Peter Doerr" ""
+.TH "exceltex" "1" "17. Februar, 2006" "version 0.4.0" "USER COMMANDS"
+
 .SH "NAME"
-exceltex \- fügt Zellen aus Excel-Dateien in LaTeX Dokumente ein.
-.SH "SYNTAX"
-\fBexceltex\fR [Optionen] Datei
+exceltex \- Zugriff auf Exceldateien aus LaTeX
+.SH "BENUTZUNG"
+.B exceltex [\-h] [\-c] [\-M \-F \-F \-C \-p] file[.tex]
+
 .SH "BESCHREIBUNG"
-.LP
-Mit Exceltex kann man ganz einfach einzelne- oder Zellen-Bereiche aus MS Excel Dateien in LaTeX Dokumente einfügen.
-.LP 
-LaTeX hat den Nachteil, dass man externe Daten vor dem einbinden ins Dokument meist erst mühsam von Hand in das richtige Format bringen muss. 
-.LP 
-Exceltex nimmt einem diese Arbeit zumindest für Tabellenkalkulationen ab, bzw. für Tabellenkalkulationen, die in M$ Excel Dateien vorliegen.
-
-.LP 
-Exceltex besteht aus einem LaTeX\-Paket und einem Perlskript. Das LaTeX\-Paket stellt zwei Kommandos für LaTeX zum einfügen von einzelnen Zellen und Zellen\-Bereichen zur Verfügung. Das Perlskript dient zum extrahieren der gewünschten Daten aus einer Exceldatei.
-
-.LP 
-Insbesondere, da es sich vorweigend um ein Linuxprogramm handelt, kann man sich fragen, warum exceltex so heisst, und warum es tatsächlich auch nur mit Exceldateien umgehen kann. Die Antwort ist einfach die, dass ich damals nur ein Perlkaket zum lesen von Exceldateien gefunden habe. Das Excelformat wird aber von praktisch allen Tabellenkalkulationsprogrammen unterstütz, und sollte daher kein allzu großes Problem sein. Aussdem enthält das Excelformat in der Standardeinstellung auch die Resultate von Rechnungen, was z.B. Gnumeric leider anscheinend nicht macht.
-
-
+Exceltex ist ein LaTeX Paket und Hilfsprogramm mit dem man sehr einfach aus LaTeX auf Zellen in Exceldateien zugreifen kann.
 .SH "OPTIONEN"
 .TP 
-\fB\-c|\-\-cleanup\fR
-löscht temporäre, von exceltex angelegte, Dateien.
-.SH "LATEX-KOMMANDOS"
-.LP 
-Exceltex bietet zum Einfügen von einzelnen Zellen oder ganzen Zellenbereichen zwei neue Kommandos für LaTeX.
-
+\-h|\-\-help
+zeigt Hilfe
 .TP 
-\fB\\inccell{Datei!Blatt!Zelle}\fR
-Fügt die Zelle 'Zelle' aus dem Blatt 'Blatt' der Datei 'Datei' an der aktuellen Stelle ins LaTeX\-Dokument ein. Falls der Dateiname der LaTeX\-Datei gleich dem der Exceldatei ist (von der Endung abgesehen), kann 'Datei' auch weggelassen werden: \fB\\inccell{Blatt!Zelle}\fR. 'Zelle' wird in den üblichen Koordinaten für Tabellenkalkulationsprogramme angegeben, z.B . A1 oder Z23.
-
-
+\-v|\-\-version
+zeigt Programmversion
+.TP
+\-c|\-\-cleanup
+entferne von exceltex angelegte temporäre Dateien für file.tex
 .TP 
-\fB\\incctab{Datei!Blatt!Zelle1!Zelle2}\fR
-Fügt mehrere Zellen im Bereich zwischen 'Zelle1' (linke, obere Ecke) und 'Zelle2' (rechte, untere Ecke) an der aktuellen Stelle ein. Die einzelnen Zellen werden dabei durch ein & getrennt. Für Datei gilt dabei das gleiche wie für \\inccell{}.
+\-m|\-\-nomath
+schaltet Vereinfachung von Zahlen in Wissenschaftlicher Notation aus
+.TP 
+\-f|\-\-noformat
+keine Formatierungen anwenden
+.TP 
+\-n|\-\-nocolor
+keine Farben verwenden
+.TP 
+\-p|\-\-plain
+schaltet \-m \-f und \-n ein
+
+.SH "LATEX KOMMANDOS"
+.PP 
+Exceltex bietet zwei Kommandos um auf einzelne Zellen und auf Tabellen zuzugreifen. Dazu muss das Paket exceltex mit \\usepackage{exceltex} geladen werden.
+.TP 
+.B \\\inccell{bla.xls!Ergebnisse!B9}
+fügt Zelle
+.B B9
+vom Arbeitsblatt
+.B Ergebnisse
+aus der Datei
+.B bla.xls
+ein.
+.TP 
+.B \\\inctab{bla.xls!Ergebnisse!B2!C15}
+Fügt die 14 Zeilen zwischen
+.B B2
+(oben links) und
+.B F15
+(unten rechts)
+aus dem Arbeitsblatt
+.B Ergebnisse
+der Datei
+.B bla.xls
+ein.
+.TP 
+Bei beiden Kommandos kann der Dateiname (bla.xls) auch weggelassen werden, falls er bis auf die Extension gleich (bla) dem der LaTeX Datei (bla.tex) ist.
+
 .SH "BENUTZUNG"
-.LP 
-Markiere einzelne Zellen und/oder Zellbereiche wie im Abschnitt LATEX\-KOMMANDOS angegeben
+.TP
+Innerhalb des LaTeX Dokuments \\incell und \\inctab verwenden. Dann latex aufrufen, danach exceltex und nochmal latex.
+.TP
+Siehe auch README (/usr/share/doc/exceltex/README bei Debian) für weitere Beispiele.
+.SH "EXIT STATUS"
+.TP
+Exceltex beendet mit Status 0 falls keine Fehler oder Warnungen aufgetreten sind. Bei Warnungen beendet es mit 1, nach Fehlern mit 2. 
 
-.LP 
-Ein erster latex\-Lauf erzeugt eine Indexdatei, aus der das exceltex Perlskript die Angaben über die einzufügenden Zellen auslesen kann. Nach diesem latex\-Lauf holt ein Aufruf von exceltex die benötigten Daten aus der Exceldatei und speichert sie einzeln in durchnummerrierten Dateien. Diese Dateien werden beim darauf folgenden, zweiten latex\-Lauf einfach mit dem \\input{}\-Kommando von LaTeX eingelesen.
-.SH "VORRAUSSETZUNGEN"
-Das exceltex Perlskript benötigt das \fBSpreadsheet::ParseExcel\fR Perl\-Paket.
-.SH "BESCHRÄNKUNGEN"
-Exceltex benutzt SpreadSheet::ParseExcel zum lesen der Exceldateien, und unterliegt damit den gleichen Problemen und Einschränkungen. Z.B. können nur Dateien gelesen werden, die die Resultate von Rechnungen mit abspeichern, was nicht immer der Fall sein muss. Aus diesem Grund können z.B. keine von SpreadSheet::WriteExcel erzeugten Dateien gelesen werden.
-.SH "DATEIEN"
-.TP 
-\fBexceltex.sty\fR
-enthält das LaTeX Package zu exceltex
+.SH ANFORDERUNGEN
+Exceltex benötigt das Perlmodul
+.B Spreadsheet::ParseExcel
+und die LaTeX Pakete
+.B ulem
+und
+.B color.
+
+.SH PROBLEME
+Abgesehen von eigenen Bugs treffen für exceltex auch die Einschränkungen und Probleme von Spreadsheet::ParseExcel zu.
+
 .SH "COPYRIGHT"
-Copyright (C) 2004,2005 Hans\-Peter Doerr
-.br 
-exceltex is distributed under the terms of the GNU GENERAL PUBLIC LICENSE
+.TP 
+Copyright (c) 2004\-2006  Hans\-Peter Doerr
+.TP 
+Exceltex  is  distributed under  the  terms  of the GNU GENERAL PUBLIC LICENSE.
 
+.TP 
 This is free software; see the source for copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-.SH "AUTOR"
+
+.SH "AUTHOR"
 geschrieben von Hans\-Peter Doerr <doerr@cip.physik.uni\-freiburg.de>

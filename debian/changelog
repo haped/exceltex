@@ -1,6 +1,21 @@
+exceltex (0.4.0-2) unstable; urgency=low
+
+  * fixed some typos
+  * minor changes to README and manpages 
+
+ -- Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>  Sat, 18 Feb 2006 17:30:06 +0100
+
+exceltex (0.4.0-1) unstable; urgency=low
+
+  * new upstream release
+  * supports simple formatting and colors
+  * cell data is now written to a separate directory
+
+ -- Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>  Fri, 17 Feb 2006 20:01:37 +0100
+
 exceltex (0.3.4-1) unstable; urgency=low
 
-  * finally fixed the problem in \inctab which caused an ugly shit in the
+  * finally fixed the problem in \inctab which caused an ugly shift in the
     last lines of tables
 
  -- Hans-Peter Doerr <pez@cipsc.physik.uni-freiburg.de>  Fri,  1 Apr 2005 11:35:29 +0200

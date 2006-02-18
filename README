@@ -1,22 +1,78 @@
-** ABOUT
+ABOUT
+^^^^^
+Exceltex is a LaTeX package combined with a helper program written in
+Perl. Exceltex makes it easy to include tabulars and cells from
+Excel(TM) files in LaTeX documents.
 
-Exceltex allows the transparent inclusion of cells and cell-ranges from MS
-Excel files in LaTeX documents.
+Exceltex honours simple text formatting like bold, italic and font
+colors.  
 
-Exceltex consists of a small LaTeX package and a perl-script. The LaTeX
-package  provides  two  simple  commands  for including single cells or
-cell-ranges, the perl-script actually extracts the ordered data from the
-spread-sheet-file.
+Exceltex' intention is it to provide a "do it once and forget"
+solution for accessing data from spreadsheet files. You don't need to
+sync data in LaTeX with the Spreadsheet anymore (or even copy each
+cell by hand - uhhhh), except that you have to press the "save" button
+of your spreadsheet application before running exceltex :)
 
 
 
-** USAGE
 
-Usage of exceltex is quite easy. consider the following LaTeX code:
+REQIREMENTS
+^^^^^^^^^^^
+The exceltex helper script uses the Spreadsheet::ParseExcel Module to
+actually read the Excel files.
+For formatting stuff the LaTeX Packages ulem and color are used.
+
+Exceltex is beeing developed and tested on Linux. Due to filename/path
+issues it will not run "out of the box" on Windows or any other
+non-Unix like Operating System.
+
+Why using excel files for this? The Excel file format is easily
+accessible via the Spreadsheet::ParseExcel module in Perl, and all
+serious Spreadsheet applications are talking the Excel file format.  I
+really would like to support the file format of a native Linux
+Spreadsheet like Gnumeric, wich is actually the application i use, but
+it seems that only the Excel fileformat saves the results of
+calculations. And this is simply a prerequisite to access the data
+from files.
+
+
+
+
+LATEX COMMANDS
+^^^^^^^^^^^^^^
+Exceltex provides two commands to include single cells and cell-ranges
+for tabulars. Load the exceltex LaTeX package via
+\usepackage{exceltex}.
+
+   \inccell{foo.xls!results!B9}
+   	includes cell B9 from sheet results in file foo.xls
+
+   \inctab{foo.xls!results!B2!C15}
+    	includes  the  14  rows between B2 and F15 from sheet results
+	in file foo.xls in LaTeX' tabular format ('&' separated rows
+        ended by \\)
+
+For both commands you may omit specifying the file (foo.xls) if it has
+the same basename (foo) as the LaTeX file (foo.tex).
+
+
+
+
+USAGE
+^^^^^
+Mark cells and tabulars for inclusion with the \incell and \inctab
+commands. Then run latex, exceltex and latex again.
+
+
+
+
+EXAMPLES
+^^^^^^^^
+The following Example demonstrates the usage of exceltex:
 
 --- snip ---
 \documentclass{article}
-\usepackage{exceltex}
+\usepackage[options]{exceltex}
 
 \begin{document}
 
@@ -25,12 +81,14 @@ Usage of exceltex is quite easy. consider the following LaTeX code:
 
 \section{including single cells}
 
-You can include contents of cells by the \\inccell command. Example:
-Cell A1 on sheet 'Sheet1' of file foo.xls is: \inccell{foo.xls!Sheet1!A1}
+You can include contents of cells with the \\inccell command. Example:
+Cell A1 on sheet 'Sheet1' of file foo.xls is:
+\inccell{foo.xls!Sheet1!A1}
 
-\section{including cell ranges}
 
-this is as easy as including single cells. Look at the following tabular.
+\section{including tabulars}
+
+this is as easy as including single cells.
 
 \begin{tabular}{lll}
   \hline
@@ -43,44 +101,84 @@ this is as easy as including single cells. Look at the following tabular.
 \end{document}
 --- snap ---
 
-now, run latex, then exceltex, and then latex again.
+now, run latex, then exceltex and latex again.
 
-nifty, isn't it? :-)
+The \inctab command does nothing else than provide the requested cells
+in LaTeX' tabular format - colums are separated with a '&', each line
+is endet with a line break (\\). This gives you a maximum of
+flexibility and the freedom to use whatever tabular package you want.
 
+You can force to disable formatting and coloring of cells with the -F
+resp. -C commandline switches.
 
-** HOW IT WORKS
-
-During the first run of latex, the \inccell and \inctab commands are writing
-the ordered cell targes to an index file. This file is then beeing read by the
-exceltex command, which extracts the ordered cells and writes them to separate
-files. Cell ranges are written to one file, separated by an ampersand (&), as
-latex requires it for tabulars.
-
-On the second latex run, the \inccell and \inctab commands then simply are
-including these files via tex' \input command.
-
-
-
-** INSTALLATION
-
-There is a Makefile in which you should edit BIN TEXMF and MANPATH to your
-needs and then run 'make install'. The default setting installs the binary
-to /usr/local/bin, exceltex.sty to /usr/local/share/texmf/tex/latex/misc,
-and the manpages to /usr/local/man.
-
-Debian users just need to put the following to their sources.list and apt-
-get installing it:
-
-deb deb http://www.physik.uni-freiburg.de/~doerr/debian/ ./
+Currently one package option is supported.
+\usepackage[cellrefs]{exceltex} will write cell data to files named by
+filename, workbook and cell instead of sequentially numbered
+files.
 
 
 
-** COPYRIGHT
+PROBLEMS
+^^^^^^^^
 
-exceltex (C) 2004, 2005 by Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
+* Exceltex cannot read Excel files created by Spreadsheet::WriteExcel
+  (see Spreadsheet::ParseExcel documentatin for details).
 
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* Workbook names must not include problematic characters (LaTeX
+  control Characters) (^,_,#). Just use Letters, Numbers and a Minus
+  as spearator.  
 
-exceltex is distributed under the terms of the Gnu General Public License (GPL).
-See COPYING for details.
+* when using the cellrefs package option, whitespaces are also
+  forbidden in workbook names and filenames. These are LaTeX
+  limitations, i think.
+
+
+
+
+
+HOW IT WORKS
+^^^^^^^^^^^^
+The first LaTeX run writes an entry for each \inctab, \inccell command
+to a spearate index file (\jobname.exltx). This index is then read by
+the exceltex helper script, which actually extracts the ordered data
+and writes it to sequentially numbered files in the directory
+\jobname-exltx.  The \inctab and \inccell are then simply including
+these files via a \InputIfExists{} command on the following latex runs.
+
+
+
+
+TODO
+^^^^
+Support for other formats than excels would be appreciating. There is
+maybe a chance to get OpenOffice Calc working. There is now a module
+OpenOffice::Parse::SXC on cpan which could to the job for Openoffice,
+but it seems quite new and is not includeded in Ubuntu yet.  On the
+other hand, support for different fileformats would yield a naming
+problem, at the time i started with exceltex (in 2004) there was only
+Spreadsheet::ParseExcel, so the name exceltex ....
+
+
+
+
+CONTACT
+^^^^^^^
+WWW:   http://www.physik.uni-freiburg.de/~doerr/exceltex
+EMail: Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
+
+
+
+
+COPYING
+^^^^^^^
+exceltex is Copyright 2004-2006 by Hans-Peter Doerr
+<doerr@cip.physik.uni-freiburg.de>
+
+This is free software; see the source for copying conditions.  There
+is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+exceltex is distributed under the terms of the Gnu General Public
+License (GPL).  See COPYING for details.
+
+

@@ -1,55 +1,90 @@
-.TH "EXCELTEX" "1" "2/2005" "Hans-Peter Doerr" ""
+.TH "exceltex" "1" "February 17, 2006" "version 0.4.0" "USER COMMANDS"
+
 .SH "NAME"
-exceltex \- includes cells from Excel\-files into LaTeX documents. 
+exceltex \- access MS Excel(TM) files from LaTeX
 .SH "SYNOPSIS"
-\fBexceltex\fR [options] file
+.B exceltex [\-h] [\-c] [\-M \-F \-F \-C \-p] file[.tex]
+
 .SH "DESCRIPTION"
-.LP 
-Exceltex allows the transparent inclusion of cells and cell\-ranges from M$ Excel files into LaTeX documents.
+Exceltex is a LaTeX package combined with a helper program written in Perl, wich makes it easy to include tabulars and cells from excel files in LaTeX documents.
 
-.LP 
-Exceltex consists of a small LaTeX package and a perl\-script. The LaTeX package provides two simple commands for including single cells or cell\-ranges, the perl\-script extracts the ordered data from the spreadsheet\-file.
-
-.LP 
-Why the name exceltex? Because it currently only works with M$ Excel files. The simple reason is, that the SpreadSheet::ParseExcel was the first perl\-package for reading Spreadsheet files I found. Support for OO.org is may be possible, unfortunately support for Gnumeric is not possible (in an easy way), since it doesn't save any results of calculations, just the formulars.
 .SH "OPTIONS"
 .TP 
-\fB\-c|\-\-cleanup\fR
-removes any temporary files
-.SH "LATEX-COMMANDS"
-.LP 
-Exceltex provides two LaTeX commands to handle the import of cells.
-
+\-h|\-\-help
+show help
 .TP 
-\fB\\inccell{File!Sheet!Cell}\fR
-includes the cell 'Cell' of the sheet 'Sheet' of the file 'File' at the current position. If the filename of the spreadsheet file is the same as your .tex file (except the extension, of course) you may omit 'File': \fB\\inccell{Sheet!Cell}\fR. 'Cell' is in the usual Spreadsheet\-coordinates, for example A1, or Z23.
-
+\-v|\-\-version
+show version
+.TP
+\-c|\-\-cleanup
+cleanup temporary files created by exceltex for file.tex
 .TP 
-\fB\\incctab{File!Sheet!Cell1!Cell2}\fR
-includes the contents of a cell\-range between 'Cell1' (upper\-left) and 'Cell2' (lower\-right), separated by a &. Use this to import table\-data from the spreadsheet into your latex document. As above, you may omit 'File' if the filenames of spreadsheet file and .tex file are equal.
+\-m|\-\-nomath
+disables simplifying of scientific numbers
+.TP 
+\-f|\-\-noformat
+dont apply any cell\-formatting such as bold or italic
+.TP 
+\-n|\-\-nocolor
+dont use colors
+.TP 
+\-p|\-\-plain
+synonym for \-m \-f and \-n
+
+.SH "LATEX COMMANDS"
+.PP 
+Exceltex provides two commands to include single cells and cell\-ranges
+for tabulars. Load the exceltex LaTeX package via \\usepackage{exceltex} in your documents preamble.
+.TP 
+.B \\\inccell{foo.xls!results!B9}
+includes cell
+.B B9
+from sheet
+.B results
+in file
+.B foo.xls
+.TP 
+.B \\\inctab{foo.xls!results!B2!C15}
+includes the 14 rows between
+.B B2
+and
+.B F15
+from sheet 
+.B results
+in file
+.B foo.xls
+in LaTeX' tabular format.
+.TP 
+For both commands you may omit specifying the file (foo.xls) if it has the same basename (foo) as the LaTeX file (foo.tex).
+
 .SH "USAGE"
-.LP 
-Mark cells and/or cell\-ranges of your spreadsheet file for inclusion in the latex\-document by using the LaTeX commands explained above.
-
-.LP 
-Run latex on your .tex file \- a index file is created, which tells the exceltex perl\-script what cells to extract from the spreadsheet file. Then run exceltex on your .tex file, which actually exctracts the data from the spreadsheet file. Then, run latex again, and all your ordered data should be included via LaTeX'  \\input{} command.
-.SH "REQUIREMENTS"
-the exceltex perl\-script needs depends on the \fBSpreadsheet::ParseExcel\fR perl\-package.
-.SH "LIMITATIONS"
-.LP 
-Exceltex uses SpreadSheet::ParseExcel for reading excelfiles, so all it's limitations and problems are applying to exceltex as well.
-
-.SH "FILES"
 .TP 
-\fBexceltex.sty\fR
-provides the latex package 'exceltex'
-.SH "COPYRIGHT"
-Copyright (C) 2004,2005 Hans\-Peter Doerr
-.br 
-exceltex is distributed under the terms of the GNU GENERAL PUBLIC LICENSE
+Mark cells and tabulars for inclusion with the \\incell and \\inctab commands. Then run latex, exceltex and latex again.
+.TP
+See file README (/usr/share/doc/exceltex/README on Debian) for examples.
+.SH "EXIT STATUS"
+.TP 
+Exceltex exits with status 0 on Success, status 1 if any warning occured and status 2 after Errors.
 
+.SH REQUIREMENTS
+Exceltex depends on the perl module 
+.B Spreadsheet::ParseExcel
+and the LaTeX Packages
+.B ulem
+and
+.B color.
+
+.SH PROBLEMS
+Exceltex uses SpreadSheet::ParseExcel for reading  excel files,  so  all it's limitations and problems are applying to exceltex as well.
+
+.SH "COPYRIGHT"
+.TP 
+Copyright (c) 2004\-2006 by Hans\-Peter Doerr
+.TP 
+Exceltex  is  distributed  under  the  terms  of the GNU GENERAL PUBLIC LICENSE.
+
+.TP 
 This is free software; see the source for copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 .SH "AUTHOR"
 written by Hans\-Peter Doerr <doerr@cip.physik.uni\-freiburg.de>
-

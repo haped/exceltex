@@ -1,88 +1,91 @@
 \documentclass{article}
-\input{../exceltex.sty}
+\usepackage{geometry}\geometry{a4paper}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{ae}
+\usepackage[cellrefs]{exceltex}
 
 
 \begin{document}
 
-\section{including cells}
+
+\section{cells}
 
 
 \begin{description}
-\item[Sheet3!A1 (0) :]  \inccell{Sheet3!A1}
-\item[Sheet3!Z1 (25) :] \inccell{test.xls!Sheet3!Z1}
-\item[Sheet3!AA1(26) :] \inccell{Sheet3!AA1}
-\item[Sheet3!AB1(27) :] \inccell{Sheet3!AB1}
-\item[Sheet3!AZ1(51) :] \inccell{Sheet3!AZ1}
-\item[Sheet3!IV9999(IV9999) :] \inccell{Sheet3!IV9999}
-\item[Sheet3!IV10000(out of range) :] \inccell{Sheet3!IV10000}
+\item[test1!A1 (A1):] \inccell{test1!A1}
+\item[test1!C16491 (C16491):]\inccell{test1!C16491}
+\item[test1!G17: (colored, strikeout, bold)] \inccell{test1!G17}
+\item[test1!Z2 (Z2):] \inccell{test1!Z2}
+\item[test1!AA2 (AA2):] \inccell{test1!AA2}
+\item[test1!BA2 (BA2):] \inccell{test1!BA2}
+\item[test1!B70 (empty):] \inccell{test1!B70}
+\item[test2!B70 (no such sheet):] \inccell{test.xls!test2!B70}
+\item[test2!CB (invlaid cell):] \inccell{test.xls!test1!CB}
 
-\end{description}
-
-
-\begin{description}
-\item[Sheet1!A1 (A1) :] \inccell{Sheet1!A1}
-\item[Sheet1!a1 (A1) :] \inccell{test.xls!Sheet1!a1}
-\item[sheet1!a1 (sheet1 does not exists) :] \inccell{sheet1!a1}
-\item[Sheet99!A1 (Sheet99 does not exists):] \inccell{Sheet99!A1}
-\item[Sheet1!C9 (9.00) :] \inccell{Sheet1!C9}
-\item[Sheet1!C10 (empty) :] \inccell{Sheet1!C10}
 \end{description}
 
 
 \section{tables}
 
-\subsection{decimal number table}
 
-\begin{tabular}{rrrr}
+
+\subsubsection{misc formatted cells}
+\begin{tabular}{lll}
   \hline
-  A & B & C & D \\
+  column 1 & colum 2 & column 3\\
   \hline
-  \inctab{Sheet1!F6!I12}
+  \inctab{test1!f13!h23}
+  \hline
+\end{tabular}
+
+\subsubsection{latex control characters}
+\begin{tabular}{lll}
+  \hline
+  column 1 & colum 2 \\
+  \hline
+  \inctab{test1!B32!D36}
   \hline
 \end{tabular}
 
 
-
-\subsection{scinetific number table}
-
-\begin{tabular}{rrrr}
+\subsubsection{Integer Table}
+\begin{tabular}{lll}
   \hline
-  A & B & C & D \\
+  column 1 & colum 2 & colum 3 \\
   \hline
-  \inctab{Sheet1!A13!D18}
+  \inctab{test1!B4!D8}
+  \hline
+\end{tabular}
+
+\subsubsection{float table}
+\begin{tabular}{lll}
+  \hline
+  column 1 & colum 2 & colum 3 \\
+  \hline
+  \inctab{test1!B12!D16}
   \hline
 \end{tabular}
 
 
-\subsection{scientific number  table with emtpy cells}
+\subsubsection{scientific numbers}
+\begin{tabular}{lll}
+  \hline
+  column 1 & colum 2 & colum 3 \\
+  \hline
+  \inctab{test1!B20!D24}
+  \hline
+\end{tabular}
 
-\begin{tabular}{rrrr}
+\subsubsection{empty table}
+\begin{tabular}{lll}
   \hline
-  A & B & C & D \\
+  column 1 & colum 2 & colum 3 \\
   \hline
-  \inctab{Sheet1!A22!D27}
+  \inctab{test1!B60!D64}
   \hline
 \end{tabular}
 
 
-\subsection{mixed math-text table}
-
-\begin{tabular}{rrrr}
-  \hline
-  A & B & C & D \\
-  \hline
-  \inctab{Sheet1!A30!D34}
-  \hline
-\end{tabular}
-
-\subsection{text table}
-
-\begin{tabular}{rrrr}
-  \hline
-  F & G & H & I \\
-  \hline
-  \inctab{Sheet1!F14!I18}
-  \hline
-\end{tabular}
 
 \end{document}

@@ -1,449 +1,752 @@
 #!/usr/bin/perl -w
+# $Id: exceltex 117 2006-02-18 16:20:06Z pez $
+#
+# helper script for the exceltex latex package. reads contents of
+# M$ Excel files using the Spreadsheet::ParseExcel package.
+#
+# (c) 2004-2006 by Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
+#
+# exceltex is free software. you can redistribute or modify it under
+# the terms of the GNU GENERAL PUBLIC LICENSE. See COPYING for
+# details.
 
-package utils;
+use strict;
 
-my %LtoN;
+my $VERSION = "0.4.0";
+my $DEBUG   = 0;
 
-sub initL2N
+# some lookup tables
+my %L2N;
+{ my $i = 1; for ('A' .. 'Z') { $L2N{$_} = $i; ++$i } }
+
+my @N2L;
+{ for ('A' .. 'Z') { push(@N2L, $_) } }
+
+
+package util;
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub DEBUG
 {
-    my $i = 1;
-    for ('A' .. 'Z') { $LtoN{$_} = $i; ++$i }
+    my ($msg) = @_;
+
+    if ($DEBUG)
+    {
+	chomp($msg);
+	print STDERR "DEBUG: $msg\n";
+    }
 }
 
-initL2N();
 
-#-------------------------------------------------------------------------------
-sub cell2Coords
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub cell2xy
 {
     my ($cell) = @_;
 
     $cell = uc($cell);
     return undef if (! ($cell =~ m/^([A-Z]+)([0-9]+)$/));
 
-    my $col = letter2number($1);
-    my $row = $2 - 1;
-
-    return ($col, $row);
+    # return (column, row)
+    return (col2x($1), $2-1);
 }
 
-#-------------------------------------------------------------------------------
-sub coords2cell
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub xy2cell
 {
     my ($x, $y) = @_;
 
+    # is is likely to be slow as hell
+    return undef if (! ($x =~ m/^[0-9]+$/g && $y =~ m/^[0-9]+$/g));
+
     ++$y;
-    my $cell = number2letter($x) .  "$y";
-    return $cell;
+    return x2col($x) .  "$y";
 }
 
-#-------------------------------------------------------------------------------
-sub letter2number
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub col2x
 {
-    my ($l) = @_;
+  my ($l) = @_;
 
     my $len = length($l);
     my @S   = split //, $l;
 
     my $n = 0;
 
-    if ($len == 1) { $n =  $LtoN{$l} - 1 }
-    if ($len == 2) { $n =  26 * $LtoN{$S[0]} + $LtoN{$S[1]} - 1 }
+    if ($len == 1) { $n =  $L2N{$l} - 1 }
+    if ($len == 2) { $n =  26 * $L2N{$S[0]} + $L2N{$S[1]} - 1 }
 
     return $n;
 }
 
 
-#-------------------------------------------------------------------------------
-sub number2letter
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub x2col
 {
     my ($n) = @_;
 
-    my @L;
-    for ('A' .. 'Z') { push(@L, $_) }
+    return undef if (! $n =~ m/[0-9]+/);
     my $l;
-
-    if ($n > 25) { $l =  "$L[int($n/26)-1]" . "$L[$n % 26]" }
-    else { $l =  "$L[$n]" }
+    if ($n > 25) { $l =  $N2L[int($n/26)-1] . $N2L[$n % 26] }
+    else { $l =  $N2L[$n] }
 
     return $l;
 }
 
-# testing section
-
-# sub testn2l
-# {
-#     my ($n, $should) = @_;
-
-#     print "number2letter($n) == $should : ";
-#     my $res = number2letter($n);
-#     if ($res ne $should) { print "FAILED (result: $res)\n" }
-#     else { print "OK\n" }
-# }
-
-# sub testl2n
-# {
-#     my ($l, $should) = @_;
-
-#     print "letter2number($l) == $should : ";
-#     my $res = letter2number($l);
-#     if ($res != $should) { print "FAILED (result: $res)\n" }
-#     else { print "OK\n" }
-# }
-
-# sub test
-# {
-#     testn2l(0, 'A');
-#     testl2n('A', 0);
-#     testn2l(1, 'B');
-#     testl2n('B', 1);
-#     testn2l(25, 'Z');
-#     testl2n('Z', 25);
-#     testn2l(26, 'AA');
-#     testl2n('AA', 26);
-#     testn2l(27, 'AB');
-#     testl2n('AB', 27);
-#     testn2l(28, 'AC');
-#     testl2n('AC', 28);
-#     testn2l(51, 'AZ');
-#     testl2n('AZ', 51);
-#     testn2l(52, 'BA');
-#     testl2n('BA', 52);
-#     testn2l(53, 'BB');
-#     testl2n('BB', 53);
-
-#     testn2l(111, 'DH');
-#     testl2n('DH', 111);
-
-# }
-
-
-
-
-package myParseExcel;
-
-use strict;
-use Spreadsheet::ParseExcel;
-
-
-#-------------------------------------------------------------------------------
-sub new
-{
-    my ($class, $file) = @_;
-
-    my $self = {};
-    $self->{ERROR} = "";
-    if (! -f $file) {
-	print "Error : file '$file' does not exists. aborting.\n";
-	exit 1;
-    }
-    $self->{book} = new Spreadsheet::ParseExcel::Workbook->Parse($file);
-    if (! defined($self->{book}))
-    {
-	print "Error : couldn't parse file '$file' : $1. aborting.\n";
-	exit 1;
-    }
-    
-    $self->{file} = $file;
-    bless $self, $class;
-    return $self;
-}
-
-#-------------------------------------------------------------------------------
-sub getCellContent
-{
-    my ($self, $sheet, $x, $y) = @_;
-
-    if (@_ == 3)
-    {
-	($x, $y) = utils::cell2Coords($x);
-    }
-
-    my $ws = $self->{book}->Worksheet($sheet);
-
-    if (! defined($ws)) {
-	$self->{ERROR} = "sheet '$self->{file}!$sheet' does not exist";
-	return undef;
-    }
-
-    my $cl = $ws->Cell($y, $x);
-
-    if (! defined($cl)) {
-	$self->{ERROR} = "cell '$sheet!" . utils::coords2cell($x,$y) . "' is out of range";
-	return undef;
-    }
-
-    return $cl->Value();
-}
-
-sub error
-{
-    my $self = shift;
-    my $err = $self->{ERROR};
-    $self->{ERROR} = "";
-    return $err;
-}
 
 
 
 
 
+
+#*******************************************************************************
+#*******************************************************************************
+#*******************************************************************************
 package main;
 
 use strict;
+use Getopt::Long;
 
-my $VERSION = "0.3.4";
+my $Workbooks = {};     # cache read workbooks here
+my $nItems    = 0;      # number of processed items
+my $nCells    = 0;      # number of processed cells
+my $nTabs     = 0;      # number of processed tabs
+my $Warnings  = 0;      # number of warnings
 
-# globals
-my $WORKBOOKS = {};
-my $WARNINGS  = 0;
-my $MATCHES   = 0;
-my $NUM_CELLS = 0;
-my $NUM_TABS  = 0;
-my $UNKNOWN_CELLS = 0;
+my $Jobname    = "";    # jobname of .tex file
+my $inputDir   = "";    # data goes here
+my $indexFile  = "";
+
+my $noFormat = 0;       # dont format anything
+my $noMath   = 0;       # dont simplify math
+my $noColor  = 0;       # dont use colors
+my $cleanup  = 0;       # cleanup inputDir
+
+my $EXTNS = "excltx";
+
+# handle commandline switches
+GetOptions('f|noformat'  => \$noFormat,
+	   'm|nomath'    => \$noMath,
+	   'n|nocolor'   => \$noColor,
+	   'p|plain'     => sub{ $noColor=1; $noFormat=1; $noMath=1 },
+	   'd|debug'   => \$DEBUG,
+	   'c|cleanup' => \$cleanup,
+	   'h|help'    => sub{ usage(); exit 0;   },
+	   'v|version' => sub{ print "exceltex, version $VERSION\n"; exit 0}
+	  ) || exit 2;
+
+if (@ARGV == 0) {
+    usage();
+    exit 2;
+}
+
+print "This is exceltex version $VERSION\n";
 
 
-if (@ARGV == 0) { usage(); exit 1 }
+# get jobname from first argument
+if ($ARGV[0] =~ m/(\w+)\.tex/g) {
+    $Jobname = $1;
+}
+else { $Jobname = $ARGV[0]; }
 
-my $file = $ARGV[0];
-
-# determine jobname of the latexfile (filename without extension)
-my $JOBNAME = $file;
-if ( $file =~ m/^(.+)\.tex$/ ) { $JOBNAME = $1 }
-
-my $INPUT_PREFIX = ".exceltex-$JOBNAME-";
-my $INDEXFILE    = "$JOBNAME-exceltex.idx";
-
-if ($ARGV[0] eq "-c" || $ARGV[0] eq "--cleanup")
+if (! defined($Jobname))
 {
-    print "cleaning up ... \n";
+    print STDERR "can not determine jobname.\n";
+    exit_error();
+}
+
+util::DEBUG("jobname is: $Jobname\n");
+
+
+# data from spreadsheet goes here
+$inputDir  = $Jobname . '-' . $EXTNS;
+$indexFile = $Jobname . '.' . $EXTNS;
+
+# cleanup?
+if ($cleanup)
+{
     cleanup();
     exit 0;
 }
 
-if ($ARGV[0] eq "-h" || $ARGV[0] eq "--help") { usage(); exit }
-cleanup();
-
-
-print "This is exceltex, version $VERSION\n";
-
-if (! open(I, "< $INDEXFILE")) {
-    print STDERR "Error:  couldn't read index '$INDEXFILE' : $!\n";
-    print STDERR "Maybe you need to run latex first. aborting.\n";
-    exit 1;
-}
-
-print "Indexfile is: $INDEXFILE\n";
-
-
-# process index, and create files with cell-contents
-while(<I>)
+if (! -f $indexFile)
 {
-    my $line = $_;
-    chomp($line);
+    print STDERR "can not read index '$indexFile: $!.\n";
+    print STDERR "run latex first to create the index.\n";
+    exit_error();
+}
 
-    my ($idx, $type, $source) = split(':', $line);
-    my @SRC = split('!', $source);
-
-    if    ($type eq "t") {
-	writeBuf($idx, "t", getTable(@SRC));
-    }
-    elsif ($type eq "c"){
-	writeBuf($idx, "c", getCell(@SRC));
-    }
-    else
+# create data dir
+if (! -d $inputDir)
+{
+    if (! mkdir $inputDir)
     {
-	print STDERR "Error : indexfile '$INDEXFILE' is corrupt. rerun latex\n";
-	exit 1;
+	print STDERR "can not crate data directory '$inputDir': $!\n";
+	exit_error();
     }
 }
-close(I);
 
 
-if ($MATCHES) {
-    print "done with $MATCHES matches ($NUM_CELLS cells and $NUM_TABS tabulars)\n";
-}else {
-    print "exeltex finished without any matches\n";
-    exit 0;
-}
-if ($WARNINGS){
-    print "Warning : not all matches processed fine, there were $WARNINGS warnings\n";
+# rock'n'roll
+processIndex($indexFile);
+
+
+# exiting message
+if ($Warnings)
+{
+    print STDERR "exceltex finished with $nItems items ($nCells cells "
+	. "and $nTabs tabulars)\n";
+    print STDERR "*** not all items proccessed fine, there were "
+	. "$Warnings Warnings\n";
     exit 1;
+}
+else
+{
+    print "exceltex successfully finished with $nItems items ($nCells cells "
+	. "and $nTabs tabulars)\n";
 }
 
 exit 0;
 
 
 
-#-------------------------------------------------------------------------------
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub exit_error
+{
+    print STDERR "aborting.\n";
+    exit 2;
+}
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 sub usage
 {
-    print "exceltex version $VERSION\n";
-    print "usage: exceltex [options] file[.tex]\n";
-    print "options:\n";
-    print "  -c|--cleanup    removes all temporary files\n";
-    print "\n";
+  print <<__EOF;
+exceltex version $VERSION
+usage: exceltex [options] file[.tex]
+options:
+        -h|--help            show this little help
+	-v|--version         show program version and exit
+	-c|--cleanup         remove temporary files created by previous runs
+	-m|--nomath          dont try to beautify scientifc numbers
+        -f|--noformat        dont use formatting of fonts
+        -n|--nocolor         dont use colors
+	-p|--plain           synonym for -m -f -n
+__EOF
 }
 
-#-------------------------------------------------------------------------------
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 sub cleanup
 {
-   unlink <.exceltex-*>;
+    if (-f $indexFile)
+    {
+	print "removing $indexFile\n";
+	unlink($indexFile);
+    }
+    return if (! defined($inputDir));
+    return if (! -d $inputDir);
+    
+    print "cleaning up $inputDir/\n";
+    unlink <$inputDir/c-*>;
+    unlink <$inputDir/t-*>;
 }
 
-#-------------------------------------------------------------------------------
+
+
+# read index file, extract data, write to files
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub processIndex
+{
+    my ($index) = @_;
+
+    if (! open(I, "< $index"))
+    {
+	print STDERR "can not read index '$index': $!. Run latex first?\n";
+	exit_error();
+    }
+
+    my $cellrefs = 0;
+    while(<I>)
+    {
+	chomp($_);
+
+	# if cellrefs is switched on, we store data in files with name
+	# inputDir/[c,t]-file!sheet!cell
+	if ($. == 1 && $_ eq ";cellrefs")
+	{
+	    print "using cell referencing by name\n";
+	    $cellrefs = 1;
+	}
+	
+	# ignore lines beginning with ;
+	next if ($_ =~ m/^;/);
+
+	my $type;
+	my $idx = undef;
+	my $source;
+	my @flags;
+
+	if ($cellrefs == 1) {($type, $source, @flags)       = split(':', $_)}
+	else                {($type, $idx, $source, @flags) = split(':', $_)}
+		
+	# parse flags
+	# not used yet
+	if (@flags != 0)
+	{
+	    my $ok  = 0;
+	    foreach (@flags)
+	    {
+		$ok = 1 if ($_ eq 'plain');
+	    }
+	    print STDERR "Index '$indexFile' corrupt at line $.: bad flag\n";
+	    exit_error();
+	}
+
+	if (! defined($source))
+	{
+	    print STDERR "Index '$indexFile' corrupt at line $.\n";
+	    exit_error();
+	}
+
+	my ($f, $s, $c1, $c2) = parseSource($source, $type);
+	if (! $s)
+	{
+	    print STDERR "Index '$indexFile' corrupt at line $.\n";
+	    exit_error();
+	}
+
+	my $string = "";
+	if ($type eq 't')
+	{
+	    $string = getTabString($f, $s, $c1, $c2);
+	}
+	elsif ($type eq 'c')
+	{
+	    $string = getCellString($f, $s, $c1);
+	}
+	else
+	{
+	    print STDERR "Index '$indexFile' corrupt at line $.: "
+		. "unknown $type '$type'\n";
+	    exit_error();
+	}
+
+	# no need to write empty data
+	next if (! defined($string));
+
+	if (! writeBuf($type, $idx, $string, $source))
+	{
+	    print STDERR "cannot write cell data: $!.\n";
+	    exit_error();
+	}
+    }
+    close(I);
+
+    return 1;
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub getFile
+{
+    my $file = $Jobname . ".xls";
+    return $file if (-f $file);
+    return undef;
+}
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub parseSource
+{
+    my ($string, $type) = @_;
+
+    my @tokens = split('!', $string);
+
+    my $file;
+    my $sheet;
+    my $cel1;
+    my $cel2;
+
+    if ($type eq 'c')
+    {
+	if (@tokens == 2)
+	{
+	    $file   = getFile();
+	    $sheet  = $tokens[0];
+	    $cel1   = $tokens[1];
+	}
+	elsif (@tokens == 3)
+	{
+	    $file   = $tokens[0];
+	    $sheet  = $tokens[1];
+	    $cel1   = $tokens[2];
+	}
+	else { return  undef; }
+    }
+    elsif ($type eq 't')
+    {
+	if (@tokens == 3)
+	{
+	    $file  = getFile();
+	    $sheet = $tokens[0];
+	    $cel1  = $tokens[1];
+	    $cel2  = $tokens[2];
+	}
+	elsif (@tokens == 4)
+	{
+	    $file  = $tokens[0];
+	    $sheet = $tokens[1];
+	    $cel1  = $tokens[2];
+	    $cel2  = $tokens[3];
+	}
+	else { return undef; }
+    }
+    else { return (undef, undef, undef, undef); }
+
+    return ($file, $sheet, $cel1, $cel2);
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub writeBuf
+{
+    my ($type, $idx, $string, $source) = @_;
+
+    # empty string is ok, but we dont need to write it then
+    return 1 if (! defined($string));
+    my $wfile;
+
+    if (! defined($idx)) { $wfile = $inputDir . "/" . $type . "-" . $source }
+    else                 { $wfile = $inputDir . "/" . $type . "-" . $idx    }
+
+    return 0 if (! open (O, ">$wfile"));
+    return 0 if (! print O $string);
+    return 0 if (! close(O));
+    return 1;
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 sub getWorkbook
 {
     my ($file) = @_;
 
-    # cache new workbooks
-    if (! $WORKBOOKS->{$file})
-    {
-	my $filetype = undef;
-	if ($file =~ m/^.+\.(.+)$/) { $filetype = $1 }
+    if (! -f $file) {
+	print STDERR "can not read '$file': it does not exists.\n";
+	exit_error();
+    }
 
-	if   ($filetype eq "xls")  {
-	    print "reading file $file\n";
-	    $WORKBOOKS->{$file} = myParseExcel->new($file);
-	}
-	else {
-	    print STDERR "Error : sorry, '$filetype' files are not supported!\n";
-	    print STDERR "aborting.\n";
-	    exit 1;
+    if (! defined($Workbooks->{$file}))
+    {
+	my $type = "xls";
+	if ($file =~ m/^\w+\.(\w+)$/g) { $type = $1 };
+
+	if ($type eq "xls")
+	{
+	    print("reading '$file'\n");
+	    # readExcel->new() will exit, if anything bad happens
+	    $Workbooks->{$file} = readExcel->new($file);
 	}
     }
 
-    return $WORKBOOKS->{$file};
+    return $Workbooks->{$file};
 }
 
-#-------------------------------------------------------------------------------
-sub writeBuf
-{
-    my ($idx, $type, $buff) = @_;
 
-    my $wfile = $INPUT_PREFIX . "$type-" . $idx;
-    if (! open (O, ">$wfile"))
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub texifyCell
+{
+    my ($cel) = @_;
+
+    my $MATH   = 0; # wether to enclose string in $$ for math mode
+    my $string = $cel->{value};
+
+    return "" if (! defined($string) || $string eq "");
+
+    # escape latex control characters
+    $string =~ s/%/\\%/g;  
+    $string =~ s/#/\\#/g;  
+    $string =~ s/_/\\_/g;  
+    $MATH = 1 if ($string =~ s/\^/\\hat{}/g);
+
+    # simplify scientific numbers if not requested otherweise
+    if (! $noMath)
     {
-	print STDERR "Error : couldn't write '$wfile' : $!\n";
-	print STDERR "aborting.\n";
-	exit 1;
+	$MATH =  1 if ($string =~ s/([0-9]+)[eE]([+-][0-9]+)/
+		       simplifyScientificNumber($1, $2)/ge);
     }
 
-    print O $buff;
-    close O;
+    # apply cell formatting and colors if not requested otherweise
+    $string = applyFormatting($string, $cel, $MATH) if(! $noFormat);
+
+    # same goes for colors
+    $string = applyColor($string, $cel) if (! $noColor);
+
+    return "\$$string\$" if ($MATH);
+    return $string;
 }
 
-#-------------------------------------------------------------------------------
-sub getFile
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub applyFormatting
 {
-    my $file = undef;
-    if ( -f "$JOBNAME.xls")  { $file = "$JOBNAME.xls"  }
+    my ($s, $c, $m) = @_;
 
-    return $file;
+    # font bold?
+    if    ($c->{bold} && $m) { $s = "\\mathbf{$s}"; }
+    elsif ($c->{bold})       { $s = "\\textbf{$s}"; }
+    
+    # font italic?
+    if    ($c->{italic} && $m) { $s = "\\mathit{$s}"; }
+    elsif ($c->{italic})       { $s = "\\textit{$s}"; }
+
+    # underlined? striked out?
+    $s = "\\uline{$s}" if ($c->{underline});
+    $s = "\\sout{$s}"  if ($c->{strikeout});
+    
+    return $s;
 }
 
-#-------------------------------------------------------------------------------
-sub parseVal
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub applyColor
 {
-    my ($value) = @_;
-    my $MATH = 0;
+    my ($s, $c) = @_;
 
-    return "" if (! defined($value));
-    return $value if ($value =~ m/^\d$/);
+    # dont use color, if font is black anyway
+    if ($c->{color} != 8)
+    {
+	# convert aabbcc hex color to float rgb
+  	$s = "\\textcolor[rgb]{" . colormap($c->{color}) . "}{$s}";
+    }
 
-    if ($value =~ s/(\w+)_(\w+)/$1_{$2}/g) { $MATH = 1 }
-    $value =~ s/%/\\%/g;
-    $value =~ s/#/\\#/g;
+    return $s;
+}
 
-    # replace 3E+3 by 3\cdot10^{3}
-    # replace 3E-3 by 3\cdot10^{-3}
-    if ($value =~ s/([0-9]+)([eE])[+]([0-9]+)/$1 \\cdot 10^{$3}/g) {$MATH = 1}
-    if ($value =~ s/([0-9]+)([eE])([-][0-9]+)/$1 \\cdot 10^{$3}/g) {$MATH = 1}
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub colormap
+{
+    my ($color) = @_;
 
-    return "\$$value\$" if ($MATH);
-    return $value;
+    util::DEBUG("color: $color\n");
+
+    return join(', ', map {hex($_)/255.0}
+	    unpack('a2a2a2', Spreadsheet::ParseExcel->ColorIdxToRGB($color)));
 }
 
 
 
-#-------------------------------------------------------------------------------
-sub getCell
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub simplifyScientificNumber
+{
+    my ($f, $e) = @_;
+
+    my $s = substr($e, 0, 1);
+    $s = '' if ($s eq "+");
+
+    # remove signum & trailing zeros
+    $e =~ s/^[+-]*//;
+    $e =~ s/^0*(\d+)/$1/;
+
+    return $f if ($e == 0);
+    return sprintf("%s \\times 10^{%s%s}", $f, $s, $e);
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub warning
+{
+    my ($msg) = @_;
+
+    chomp($msg);
+    print STDERR "warning: "  . $msg . "\n";
+    ++$Warnings;
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub getCellString
 {
     my ($file, $sheet, $cell) = @_;
 
-    if (@_ == 2)
+    util::DEBUG("get $file -> $sheet -> $cell\n");
+
+    my $w = getWorkbook($file);
+    return undef if (! defined($w));
+
+    my ($x, $y) = util::cell2xy($cell);
+    if (! defined($x) || ! defined($y)) {
+	warning("cell '$cell' is invalid\n");
+	return undef;
+    }
+    
+    my $c = $w->getCell($sheet, $x, $y);
+    warning($w->error()) if (! defined($c->{value}));
+
+    ++$nItems;
+    ++$nCells;
+    return texifyCell($c);
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub getTabString
+{
+    my ($file, $sheet, $cell1, $cell2) = @_;
+
+    # cell1 is upper-left and cell2 is lower-right corner
+    # of the selected cell-range
+    my ($lfx, $upy) = util::cell2xy($cell1);
+    my ($rtx, $loy) = util::cell2xy($cell2);
+    
+    if (! defined($lfx))
     {
-	$file = getFile();
-	$sheet = $_[0];
-	$cell  = $_[1];
+	warning "cell '$cell1' is invalid\n";
+	return undef;
     }
-
-    $cell = uc($cell);
-
-    my $value = getWorkbook($file)->getCellContent($sheet, $cell);
-
-    if (! defined($value)){
-	++$WARNINGS;
-	print "Warning : " . getWorkbook($file)->error() . "\n";
+    if (! defined($rtx))
+    {
+	warning "cell '$cell2' is invlaid\n";
+	return undef;
     }
-
-    ++$MATCHES;
-    ++$NUM_CELLS;
-
-    return parseVal($value);
+    
+    my $book = getWorkbook($file);
+    my $buf;
+    
+    my $empty = 1;
+    
+    for (my $y = $upy; $y <= $loy; ++$y)
+    {
+	for (my $x = $lfx; $x <= $rtx; ++$x)
+	{
+	    my $c = $book->getCell($sheet, $x, $y);
+	    
+	    warning($book->error()) if (! defined($c));
+	    $empty = 0 if(defined($c->{value}));
+	    $buf .= texifyCell($c);
+	    $buf .= " & " if ($x < $rtx);
+	}
+	$buf .= " \\\\\n";
+    }
+    
+    warning("table $cell1!$cell2 is empty\n") if ($empty);
+    
+    ++$nItems;
+    ++$nTabs;
+    return $buf;
 }
 
 
 
-#-------------------------------------------------------------------------------
-sub getTable
+
+
+#*******************************************************************************
+#*******************************************************************************
+#*******************************************************************************
+package readExcel;
+
+use strict;
+use Spreadsheet::ParseExcel;
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub new
 {
-  my ($file, $sheet, $cell1, $cell2) = @_;
+    my ($class, $file) = @_;
 
-  # called with only 3 arguments means no file was given
-  if (@_ == 3)
-  {
-      $cell2 = $cell1;
-      $cell1 = $sheet;
-      $sheet = $file;
-      $file  = getFile();
-  }
+    my $self = {};
+    $self->{ERROR} = "";
 
-  # cell1 is upper-left and cell2 is lower-right corner
-  # of the selected cell-range
-  my ($lfx, $upy) = utils::cell2Coords($cell1);
-  my ($rtx, $loy) = utils::cell2Coords($cell2);
+    if (! -f $file)
+    {
+	print STDERR "cannot read '$file', it does not exists.\n";
+	exit_error();
+    }
 
-  if (! defined($lfx)) {
-      print  "Warning : '$cell1' is no valid cell coordinate\n";
-      ++$WARNINGS;
-      return undef;
-  }
-  if (! defined($rtx)) {
-      print  "Warning : '$cell2' is no valid cell coordinate\n";
-      ++$WARNINGS;
-      return undef;
-  }
+    $self->{book} =  Spreadsheet::ParseExcel::Workbook->Parse($file);
+    if (! defined($self->{book}))
+    {
+	print STDERR "SpreadSheet::ParseExcel Error: "
+	    . "can not parse '$file' : $!\n";
+	exit_error();
+    }
+    
+    $self->{file} = $file;
+    bless $self, $class;
+    
+    return $self;
+}
 
-  my $book = getWorkbook($file);
-  my $buf;
 
-  for (my $y = $upy; $y <= $loy; ++$y)
-  {
-      for (my $x = $lfx; $x <= $rtx; ++$x)
-      {
-	  my $val = $book->getCellContent($sheet, $x, $y);
-	  if (! defined($val))
-	  {
-	      ++$WARNINGS;
-	      print "Warning : " . getWorkbook($file)->error() . "\n";
-	  }
-	  $buf .= parseVal($val);
-	  $buf .= " & " if ($x < $rtx);
-      }
-      $buf .= " \\\\\n";
-  }
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub getCell
+{
+    my ($self, $sheet, $x, $y) = @_;
+    
+    my $ws = $self->{book}->Worksheet($sheet);
+    if (! defined($ws))
+    {
+	$self->_setError("sheet '$sheet' does not exist");
+	return undef;
+    }
 
-  ++$MATCHES;
-  ++$NUM_TABS;
-  return $buf;
+    my $cell = $ws->Cell($y, $x);
+
+    if(! $cell)
+    {
+	$self->_setError("cell '$sheet!" . util::xy2cell($x, $y) . "' is emtpy "
+			 . "or out of range");
+
+	return { value => undef }
+    }
+
+    # return hash containing value and formatting
+    return { value     => $cell->Value(),
+	     bold      => $cell->{Format}->{Font}->{Bold},
+	     italic    => $cell->{Format}->{Font}->{Italic},
+	     color     => $cell->{Format}->{Font}->{Color},
+	     underline => $cell->{Format}->{Font}->{Underline},
+	     strikeout => $cell->{Format}->{Font}->{Strikeout}
+	   };
+}
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub _setError
+{
+    my ($self, $err) = @_;
+    $self->{ERROR} = $err;
+}
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub error
+{
+    my $self = shift;
+    my $err = $self->{ERROR};
+    $self->{ERROR} = undef;
+    return $err;
 }
