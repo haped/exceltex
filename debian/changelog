@@ -1,3 +1,12 @@
+exceltex (0.5.0-1) unstable; urgency=low
+
+  * changed commandline interface
+  * supports configuration files
+  * experimental support for the euro currency symbol
+  * supports selection of character encoding
+
+ -- Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>  Sat, 11 Mar 2006 13:46:58 +0100
+
 exceltex (0.4.0-2) unstable; urgency=low
 
   * fixed some typos

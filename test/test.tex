@@ -1,13 +1,14 @@
 \documentclass{article}
 \usepackage{geometry}\geometry{a4paper}
 \usepackage[T1]{fontenc}
+%\usepackage{ucs}
 \usepackage[latin1]{inputenc}
 \usepackage{ae}
+\usepackage{eurosym}
 \usepackage[cellrefs]{exceltex}
 
 
 \begin{document}
-
 
 \section{cells}
 
@@ -22,12 +23,15 @@
 \item[test1!B70 (empty):] \inccell{test1!B70}
 \item[test2!B70 (no such sheet):] \inccell{test.xls!test2!B70}
 \item[test2!CB (invlaid cell):] \inccell{test.xls!test1!CB}
+\item[test1!G32 (currency \$):] \inccell{test1!G30}
+\item[test1!C38 (EUR Symbol):] \inccell{test1!C38}
+\item[test1!G29 (EUR currency):] \inccell{test1!G29}
+\item[test1!B38 (umlaute):] \inccell{test1!b38}
 
 \end{description}
 
 
 \section{tables}
-
 
 
 \subsubsection{misc formatted cells}
@@ -39,12 +43,12 @@
   \hline
 \end{tabular}
 
-\subsubsection{latex control characters}
+\subsubsection{problematic characters}
 \begin{tabular}{lll}
   \hline
   column 1 & colum 2 \\
   \hline
-  \inctab{test1!B32!D36}
+  \inctab{test1!B32!D38}
   \hline
 \end{tabular}
 
@@ -77,12 +81,22 @@
   \hline
 \end{tabular}
 
+
 \subsubsection{empty table}
 \begin{tabular}{lll}
   \hline
   column 1 & colum 2 & colum 3 \\
   \hline
   \inctab{test1!B60!D64}
+  \hline
+\end{tabular}
+
+\subsubsection{special formatted cells}
+\begin{tabular}{ll}
+  \hline
+  column 1 & colum \\
+  \hline
+  \inctab{test1!f27!g31}
   \hline
 \end{tabular}
 

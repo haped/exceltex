@@ -1,40 +1,51 @@
-.TH "exceltex" "1" "February 17, 2006" "version 0.4.0" "USER COMMANDS"
-
+.\" 
+.TH "exceltex" "1" "March 10, 2006" "version 0.5.0" ""
 .SH "NAME"
-exceltex \- access MS Excel(TM) files from LaTeX
+exceltex \- include data from Excel files into LaTeX
 .SH "SYNOPSIS"
-.B exceltex [\-h] [\-c] [\-M \-F \-F \-C \-p] file[.tex]
+.B exceltex [options] file[.tex]
 
 .SH "DESCRIPTION"
 Exceltex is a LaTeX package combined with a helper program written in Perl, wich makes it easy to include tabulars and cells from excel files in LaTeX documents.
-
 .SH "OPTIONS"
 .TP 
 \-h|\-\-help
-show help
+show this help
 .TP 
 \-v|\-\-version
-show version
-.TP
+show program version and exit
+.TP 
 \-c|\-\-cleanup
-cleanup temporary files created by exceltex for file.tex
+remove temporary files created by previous runs
 .TP 
-\-m|\-\-nomath
-disables simplifying of scientific numbers
+\-i|\-\-ignore\-warnings
+exit with status zero, even on warnings
+.TP
+\-o|\-\-euro\-symbol=sym
+use sym as the euro currency symbol [EUR]. Best is to use \\usepackage{eurosym} and set sym=\\euro{}
 .TP 
-\-f|\-\-noformat
-dont apply any cell\-formatting such as bold or italic
+\-e|\-\-encoding=enc
+set encoding to enc. Currently supported encodings are: latin1, latin9, utf8 [latin1]
 .TP 
-\-n|\-\-nocolor
-dont use colors
+\-\-[no]reformat\-sn
+(dont) reformat scientific numbers to A X 10^B notation
+.TP 
+\-\-[no]comma
+(dont) use comma for decimal numbers
+.TP 
+\-\-[no]format
+(dont) use formatting
+.TP 
+\-\-[no]nocolor
+(dont) use colors
 .TP 
 \-p|\-\-plain
-synonym for \-m \-f and \-n
+shorthand for \-\-noformat \-\-nocolor \-\-noreformat\-sn
+
 
 .SH "LATEX COMMANDS"
 .PP 
-Exceltex provides two commands to include single cells and cell\-ranges
-for tabulars. Load the exceltex LaTeX package via \\usepackage{exceltex} in your documents preamble.
+The exceltex package provides two macros to include data from singe cells and cell ranges. 
 .TP 
 .B \\\inccell{foo.xls!results!B9}
 includes cell
@@ -43,6 +54,7 @@ from sheet
 .B results
 in file
 .B foo.xls
+
 .TP 
 .B \\\inctab{foo.xls!results!B2!C15}
 includes the 14 rows between
@@ -54,34 +66,81 @@ from sheet
 in file
 .B foo.xls
 in LaTeX' tabular format.
-.TP 
-For both commands you may omit specifying the file (foo.xls) if it has the same basename (foo) as the LaTeX file (foo.tex).
 
-.SH "USAGE"
 .TP 
-Mark cells and tabulars for inclusion with the \\incell and \\inctab commands. Then run latex, exceltex and latex again.
+For both commands you may omit to specify the filename (foo.xls) if it has the same basename (foo) as the LaTeX file (foo.tex).
+
+.SH "EXAMPLE"
+.TP 
+The following is a minimal example for using exceltex.
+
+\\documentclass{article}
+.br 
+\\usepackage{exceltex}
+.br 
+.br 
+\\begin{document}
+
+input cell Sheet1!A1: \\inccell{example.xls!Sheet1!A1}
+
+and now a table:
+
+\\begin{tabular}{lll}
+.br 
+  \\hline
+.br 
+  column 1 & colum 2 & colum 3 \\\\
+.br 
+  \\hline
+.br 
+  \\inctab{example.xls!Sheet1!A1!C5}
+.br 
+  \\hline
+.br 
+\\end{tabular}
+.br 
+.br 
+\\end{document}
+.br 
 .TP
-See file README (/usr/share/doc/exceltex/README on Debian) for examples.
+Now, run latex, exceltex and latex again.
+.TP
+As said above, you may omit the filename in \\inccell and \\inctab if it has the same basename as the LaTeX file.
+
+
+
 .SH "EXIT STATUS"
 .TP 
 Exceltex exits with status 0 on Success, status 1 if any warning occured and status 2 after Errors.
 
-.SH REQUIREMENTS
-Exceltex depends on the perl module 
-.B Spreadsheet::ParseExcel
-and the LaTeX Packages
-.B ulem
-and
-.B color.
+.SH "REQUIREMENTS"
+.TP 
+Exceltex depends on the perl module \fISpreadsheet::ParseExcel\fR and the LaTeX Packages \fIulem\fR and \fIcolor\fR.
 
-.SH PROBLEMS
-Exceltex uses SpreadSheet::ParseExcel for reading  excel files,  so  all it's limitations and problems are applying to exceltex as well.
+.SH "PROBLEMS"
+* not all Excel files are supported, see Spreadsheet::ParseExcel documentation for details.
+
+* all Characters which need macros in LaTeX are not supported (greek Symbols etc.)
+
+* Don't use any LaTeX control characters (\,^,_,#,{,},!) in filenames or Sheet names. 
+.SH "FILES"
+.TP 
+.B .exceltexrc
+You can set defaults for all options in global ($HOME/.exceltexrc) or project specific (.exceltexrc) configuration files. For example, just put the following two lines in $HOME/.exceltexrc to set the default encoding to utf8 and use \\euro{} as euro symbol:
+
+encoding=utf8
+.br 
+euro-symbol=\\euro{}
+
+.SH "IN THE WEB"
+.TP
+The newest version and probably more information is available at: http://www.physik.uni-freiburg.de/~doerr/exceltex
 
 .SH "COPYRIGHT"
 .TP 
 Copyright (c) 2004\-2006 by Hans\-Peter Doerr
 .TP 
-Exceltex  is  distributed  under  the  terms  of the GNU GENERAL PUBLIC LICENSE.
+Exceltex  is  distributed  under  the  terms  of the GNU GENERAL PUBLIC LICENSE Version 2.
 
 .TP 
 This is free software; see the source for copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

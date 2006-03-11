@@ -10,7 +10,7 @@ test: test.tex test.xls
 	$(EXCELTEX) test || exit 0
 	latex test || exit 0
 
-viewtest: test
+viewtest: clean test
 	dvipdf test
 	clear
 	$(EXCELTEX) test || exit 0

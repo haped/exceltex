@@ -10,7 +10,5 @@ Section: tex
 Architecture: all
 Depends: libspreadsheet-parseexcel-perl, tetex-base
 Pre-Depends: perl
-Description: accessing Excel files from LaTeX
- Exceltex consists of a LaTeX package providing two commands to include cells
- and tabulars, and a perlscript which actually extracts the ordered data
- from the Excel file.
+Description: include data from Excel files into LaTeX
+ Exceltex is a LaTeX package combined with a helper program written in Perl, wich makes it easy to include tabulars and cells from excel files in LaTeX documents

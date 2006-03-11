@@ -1,50 +1,65 @@
-.TH "exceltex" "1" "17. Februar, 2006" "version 0.4.0" "USER COMMANDS"
-
+.\" 
+.TH "exceltex" "1" "10. März, 2006" "version 0.5.0" ""
 .SH "NAME"
-exceltex \- Zugriff auf Exceldateien aus LaTeX
+exceltex \- Daten aus Exceldateien in LaTeX einfügen
 .SH "BENUTZUNG"
-.B exceltex [\-h] [\-c] [\-M \-F \-F \-C \-p] file[.tex]
+.B exceltex [optionen] file[.tex]
 
 .SH "BESCHREIBUNG"
-Exceltex ist ein LaTeX Paket und Hilfsprogramm mit dem man sehr einfach aus LaTeX auf Zellen in Exceldateien zugreifen kann.
+Exceltex besteht aus einem LaTeX Paket und einem Perlskript, womit man sehr einfach Daten aus Exceldateien in LaTeX Dokumente einfügen kann.
 .SH "OPTIONEN"
 .TP 
 \-h|\-\-help
-zeigt Hilfe
+zeigt diese Hilfe
 .TP 
 \-v|\-\-version
 zeigt Programmversion
-.TP
+.TP 
 \-c|\-\-cleanup
-entferne von exceltex angelegte tempor�re Dateien f�r file.tex
+loescht von exceltex angelegte Dateien
 .TP 
-\-m|\-\-nomath
-schaltet Vereinfachung von Zahlen in Wissenschaftlicher Notation aus
+\-i|\-\-ignore\-warnings
+immer mit Status 0 beenden, auch bei Warnungen
+.TP
+\-o|\-\-euro-symbol=sym
+Verwende sym als EUROsymbol [EUR]. Am besten \\usepackage{eurosym} verwenden und sym auf \\euro{} setzen.
 .TP 
-\-f|\-\-noformat
-keine Formatierungen anwenden
+\-e|\-\-encoding=enc
+Zeichensatz auf enc setzen. Derzeit unterstützte Zeichensätze sind: latin1, latin9, utf8 [latin1]
 .TP 
-\-n|\-\-nocolor
-keine Farben verwenden
+\-\-[no]reformat\-sn
+(nicht) Zahlen in Wissenschaftlicher Notation auf die From A X 10^B umschreiben
+.TP 
+\-\-[no]comma
+(kein) Komma fuer Dezimalzahlen verwenden
+.TP 
+\-\-[no]format
+(keine) Formatierungen verwenden
+.TP 
+\-\-[no]nocolor
+(keine) Farben verwenden
 .TP 
 \-p|\-\-plain
-schaltet \-m \-f und \-n ein
+Abkuerzung für \-\-noformat \-\-nocolor \-\-noreformat\-sn
+
 
 .SH "LATEX KOMMANDOS"
 .PP 
 Exceltex bietet zwei Kommandos um auf einzelne Zellen und auf Tabellen zuzugreifen. Dazu muss das Paket exceltex mit \\usepackage{exceltex} geladen werden.
+
 .TP 
 .B \\\inccell{bla.xls!Ergebnisse!B9}
-f�gt Zelle
+fügt Zelle
 .B B9
 vom Arbeitsblatt
 .B Ergebnisse
 aus der Datei
 .B bla.xls
 ein.
+
 .TP 
 .B \\\inctab{bla.xls!Ergebnisse!B2!C15}
-F�gt die 14 Zeilen zwischen
+Fügt die 14 Zeilen zwischen
 .B B2
 (oben links) und
 .B F15
@@ -54,34 +69,76 @@ aus dem Arbeitsblatt
 der Datei
 .B bla.xls
 ein.
-.TP 
-Bei beiden Kommandos kann der Dateiname (bla.xls) auch weggelassen werden, falls er bis auf die Extension gleich (bla) dem der LaTeX Datei (bla.tex) ist.
 
-.SH "BENUTZUNG"
+.TP 
+Bei beiden Kommandos kann die Angabe des Dateinamens auch entfallen, falls er, abgesehen von der Endung, gleich dem der LaTeXdatei ist.
+
+.SH "BEISPIEL"
+.TP 
+Der folgene LaTeX Code ist ein Minimalbeispiel für die Verwendung von exceltex:
+
+\\documentclass{article}
+.br 
+\\usepackage{exceltex}
+.br 
+.br 
+\\begin{document}
+
+Blatt1:A1 einfuegen: \\inccell{beispiel.xls!Blatt1!A1}
+
+eine Tabelle:
+
+\\begin{tabular}{lll}
+.br 
+  \\hline
+.br 
+  Spalte 1 & Spalte 2 & Spalte 3 \\\\
+.br 
+  \\hline
+.br 
+  \\inctab{beispiel.xls!Blatt1!A1!C5}
+.br 
+  \\hline
+.br 
+\\end{tabular}
+.br 
+.br 
+\\end{document}
+.br 
 .TP
-Innerhalb des LaTeX Dokuments \\incell und \\inctab verwenden. Dann latex aufrufen, danach exceltex und nochmal latex.
-.TP
-Siehe auch README (/usr/share/doc/exceltex/README bei Debian) f�r weitere Beispiele.
+Jetzt latex aufrufen dann exceltex und nochmal latex.
+
 .SH "EXIT STATUS"
-.TP
+.TP 
 Exceltex beendet mit Status 0 falls keine Fehler oder Warnungen aufgetreten sind. Bei Warnungen beendet es mit 1, nach Fehlern mit 2. 
 
-.SH ANFORDERUNGEN
-Exceltex ben�tigt das Perlmodul
-.B Spreadsheet::ParseExcel
-und die LaTeX Pakete
-.B ulem
-und
-.B color.
+.SH "ANFORDERUNGEN"
+Exceltex benötigt das Perlmodul \fISpreadsheet::ParseExcel\fR und die LaTeX Pakete \fIulem\fR und \fIcolor\fR.
 
-.SH PROBLEME
-Abgesehen von eigenen Bugs treffen f�r exceltex auch die Einschr�nkungen und Probleme von Spreadsheet::ParseExcel zu.
+.SH "PROBLEME"
+* Prinzipbedingt kann \fISpreadSheet::ParseExcel\fR nur mit solchen Dateien etwas anfangen, bei denen neben den Formeln auch die berechneten Werte mit abgespeichert sind. Dies muss aber nicht unbedingt der Fall sein siehe dazu auch die Dokumentation zu \fISpreadSheet::ParseExcel\fR
+
+* Sonderzeichen die in Tex nur über Macros zugänglich sind (griechische Symbole, etc.) werden nicht unterstützt.
+
+* Dateinamen und Arbeitsmappen dürfen keine für LaTeX problematischen Zeichen enthalten (^,_,#,{,},!), Das Ausrufezeichen wird von Exceltex als Trennsymbol verwendet. Am besten einfach nur Buchstaben, Zahlen und Bindestrich verwenden.
+
+.SH "DATEIEN"
+.B .exceltexrc
+alle Kommadozeilenschalter können auch fest in Konfigurationsdateien eingetragen werden, und zwar Global ind $HOME/.exceltexrc oder projektbezogen im aktuellen Verzeichnis in .exceltexrc. Schreibe einfach folgende Zeilen in $HOME/.exceltexrc um immer utf8, und \\euro{} als Eurosymbol zu verwenden:
+
+encoding=utf8
+.br
+euro-symbol=\\euro{}
+
+.SH "WEITERE INFORMATIONEN"
+.TP
+Die neueste Version und weitere Informationen zu exceltex gibt es unter http://www.physik.uni-freiburg.de/¨doerr/exceltex
 
 .SH "COPYRIGHT"
 .TP 
 Copyright (c) 2004\-2006  Hans\-Peter Doerr
 .TP 
-Exceltex  is  distributed under  the  terms  of the GNU GENERAL PUBLIC LICENSE.
+Exceltex  is  distributed under  the  terms  of the GNU GENERAL PUBLIC LICENSE Version 2.
 
 .TP 
 This is free software; see the source for copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

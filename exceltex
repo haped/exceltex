@@ -1,19 +1,22 @@
 #!/usr/bin/perl -w
-# $Id: exceltex 117 2006-02-18 16:20:06Z pez $
+# $Id: exceltex 143 2006-03-09 23:52:37Z pez $
 #
 # helper script for the exceltex latex package. reads contents of
-# M$ Excel files using the Spreadsheet::ParseExcel package.
+# M$ Excel files using the Spreadsheet::ParseExcel perl module.
 #
 # (c) 2004-2006 by Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
 #
 # exceltex is free software. you can redistribute or modify it under
-# the terms of the GNU GENERAL PUBLIC LICENSE. See COPYING for
+# the terms of the GNU GENERAL PUBLIC LICENSE Version 2. See COPYING for
 # details.
 
 use strict;
 
-my $VERSION = "0.4.0";
+my $VERSION = "0.5.0";
 my $DEBUG   = 0;
+
+# this is the default encoding for all files written by exceltex
+my $ENCODING = "latin1";
 
 # some lookup tables
 my %L2N;
@@ -23,10 +26,11 @@ my @N2L;
 { for ('A' .. 'Z') { push(@N2L, $_) } }
 
 
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 package util;
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub DEBUG
 {
     my ($msg) = @_;
@@ -39,8 +43,7 @@ sub DEBUG
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub cell2xy
 {
     my ($cell) = @_;
@@ -53,8 +56,7 @@ sub cell2xy
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub xy2cell
 {
     my ($x, $y) = @_;
@@ -67,8 +69,7 @@ sub xy2cell
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub col2x
 {
   my ($l) = @_;
@@ -85,8 +86,7 @@ sub col2x
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub x2col
 {
     my ($n) = @_;
@@ -103,15 +103,13 @@ sub x2col
 
 
 
-
-
-#*******************************************************************************
-#*******************************************************************************
-#*******************************************************************************
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 package main;
 
 use strict;
 use Getopt::Long;
+use Encode;
 
 my $Workbooks = {};     # cache read workbooks here
 my $nItems    = 0;      # number of processed items
@@ -123,30 +121,60 @@ my $Jobname    = "";    # jobname of .tex file
 my $inputDir   = "";    # data goes here
 my $indexFile  = "";
 
-my $noFormat = 0;       # dont format anything
-my $noMath   = 0;       # dont simplify math
-my $noColor  = 0;       # dont use colors
-my $cleanup  = 0;       # cleanup inputDir
+
+my $optFormat = 1;  # use formatting?
+my $optColor  = 1;  # use colors?
+my $optComma  = 0;  # use comma for decimals
+my $optFmtSci = 0;  # reformat scientific numbers?
+my $ignWarn   = 0;  # ignore warnings?
+my $euroSymbol  = "EUR"; # use this for the EUR currency symbol
+
+my $cleanup   = 0;      # cleanup inputDir
 
 my $EXTNS = "excltx";
 
+# read global and local config files
+# will be overwritten by commandline options
+readConfigFile("$ENV{HOME}/.exceltexrc") if (-f "$ENV{HOME}/.exceltexrc");
+readConfigFile(".exceltexrc") if (-f ".exceltexrc");
+
 # handle commandline switches
-GetOptions('f|noformat'  => \$noFormat,
-	   'm|nomath'    => \$noMath,
-	   'n|nocolor'   => \$noColor,
-	   'p|plain'     => sub{ $noColor=1; $noFormat=1; $noMath=1 },
-	   'd|debug'   => \$DEBUG,
-	   'c|cleanup' => \$cleanup,
-	   'h|help'    => sub{ usage(); exit 0;   },
-	   'v|version' => sub{ print "exceltex, version $VERSION\n"; exit 0}
-	  ) || exit 2;
+GetOptions('format!'       => \$optFormat,
+	   'color!'        => \$optColor,
+	   'comma!'        => \$optComma,
+	   'reformat-sn!'  => \$optFmtSci,
+	   'p|plain'       => sub{$optFormat=0; $optColor=0; $optFmtSci=0;},
+	   'd|debug'       => \$DEBUG,
+	   'c|cleanup'     => \$cleanup,
+           'e|encoding=s'  => \$ENCODING,
+           'o|euro-symbol=s' => \$euroSymbol,
+	   'h|help'        => sub{ usage(); exit 0;},
+	   'v|version'     => sub{ print "exceltex, version $VERSION\n"; exit 0},
+	   'w|ignore-warnings' => \$ignWarn,
+	   ) || exit 2;
 
 if (@ARGV == 0) {
     usage();
     exit 2;
 }
 
-print "This is exceltex version $VERSION\n";
+
+
+# encoding of output files
+$ENCODING = lc($ENCODING);
+if (! ($ENCODING eq "latin1"      ||
+       $ENCODING eq "iso-8859-1"  ||
+       $ENCODING eq "latin9"      ||
+       $ENCODING eq "iso-8859-15" ||
+       $ENCODING eq "utf8"))
+{
+    print STDERR "Unsupported encoding: $ENCODING\n";
+    print STDERR "currently supported: iso-8859-1 (latin1), iso-8859-15 "
+	. "(latin9), utf8\n";
+    exit_error();
+}
+
+print "exceltex helper script, version $VERSION\n";
 
 
 # get jobname from first argument
@@ -157,7 +185,7 @@ else { $Jobname = $ARGV[0]; }
 
 if (! defined($Jobname))
 {
-    print STDERR "can not determine jobname.\n";
+    print STDERR "can't determine jobname.\n";
     exit_error();
 }
 
@@ -177,7 +205,7 @@ if ($cleanup)
 
 if (! -f $indexFile)
 {
-    print STDERR "can not read index '$indexFile: $!.\n";
+    print STDERR "can't read index '$indexFile: $!.\n";
     print STDERR "run latex first to create the index.\n";
     exit_error();
 }
@@ -187,7 +215,7 @@ if (! -d $inputDir)
 {
     if (! mkdir $inputDir)
     {
-	print STDERR "can not crate data directory '$inputDir': $!\n";
+	print STDERR "can't create data directory '$inputDir': $!\n";
 	exit_error();
     }
 }
@@ -204,6 +232,7 @@ if ($Warnings)
 	. "and $nTabs tabulars)\n";
     print STDERR "*** not all items proccessed fine, there were "
 	. "$Warnings Warnings\n";
+    exit 0 if ($ignWarn);
     exit 1;
 }
 else
@@ -216,34 +245,63 @@ exit 0;
 
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub exit_error
 {
     print STDERR "aborting.\n";
     exit 2;
 }
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub usage
 {
   print <<__EOF;
 exceltex version $VERSION
 usage: exceltex [options] file[.tex]
 options:
-        -h|--help            show this little help
-	-v|--version         show program version and exit
-	-c|--cleanup         remove temporary files created by previous runs
-	-m|--nomath          dont try to beautify scientifc numbers
-        -f|--noformat        dont use formatting of fonts
-        -n|--nocolor         dont use colors
-	-p|--plain           synonym for -m -f -n
+   -h|--help             show this help
+   -v|--version          show program version and exit
+   -c|--cleanup          remove temporary files created by previous runs
+   -w|--ignore-warnings  exit with status zero, even on warnings
+   -o|--euro-symbol=sym  use sym for displaying the euro currency symbol [EUR]
+   -e|--encoding=enc     set encoding to enc. Currently supported
+                         encodings are: latin1, latin9, utf8 [latin1]
+   --[no]reformat-sn     (dont) reformat scientific numbers to A X 10^B notation
+   --[no]comma           (dont) use comma for decimal numbers
+   --[no]format          (dont) use formatting
+   --[no]nocolor         (dont) use colors
+   -p|--plain            shorthand for --noformat --nocolor --noreformat-sn
 __EOF
 }
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+sub readConfigFile
+{
+    my ($file) = @_;
+
+    open(I, "<$file") || return;
+    while(<I>)
+    {
+	chomp();
+	my ($key, $val) = split('=', $_);
+
+	if ($key eq "encoding")        { $ENCODING  = $val }
+	elsif ($key eq "reformat-sn")  { $optFmtSci = $val }
+	elsif ($key eq "color")        { $optColor  = $val }
+	elsif ($key eq "format")       { $optFormat = $val }
+	elsif ($key eq "comma")        { $optComma  = $val }
+	elsif ($key eq "euro-symbol")  { $euroSymbol = $val }
+	elsif ($key eq "plain")        { $optColor=0; $optFormat=0}
+	else  { print STDERR "unsupported config option in '$file': "
+		    . "$key, ignoring\n"  }
+    }
+    close(I);
+}
+
+
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub cleanup
 {
     if (-f $indexFile)
@@ -253,7 +311,7 @@ sub cleanup
     }
     return if (! defined($inputDir));
     return if (! -d $inputDir);
-    
+
     print "cleaning up $inputDir/\n";
     unlink <$inputDir/c-*>;
     unlink <$inputDir/t-*>;
@@ -262,15 +320,14 @@ sub cleanup
 
 
 # read index file, extract data, write to files
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub processIndex
 {
     my ($index) = @_;
 
     if (! open(I, "< $index"))
     {
-	print STDERR "can not read index '$index': $!. Run latex first?\n";
+	print STDERR "can't read index '$index': $!. Run latex first?\n";
 	exit_error();
     }
 
@@ -286,7 +343,7 @@ sub processIndex
 	    print "using cell referencing by name\n";
 	    $cellrefs = 1;
 	}
-	
+
 	# ignore lines beginning with ;
 	next if ($_ =~ m/^;/);
 
@@ -297,7 +354,7 @@ sub processIndex
 
 	if ($cellrefs == 1) {($type, $source, @flags)       = split(':', $_)}
 	else                {($type, $idx, $source, @flags) = split(':', $_)}
-		
+
 	# parse flags
 	# not used yet
 	if (@flags != 0)
@@ -343,9 +400,13 @@ sub processIndex
 	# no need to write empty data
 	next if (! defined($string));
 
+	# FIXME: needs some error handling here
+	$string = decode_utf8($string, 0);
+	$string = encode($ENCODING, $string, 0);
+
 	if (! writeBuf($type, $idx, $string, $source))
 	{
-	    print STDERR "cannot write cell data: $!.\n";
+	    print STDERR "can't write cell data: $!.\n";
 	    exit_error();
 	}
     }
@@ -355,8 +416,7 @@ sub processIndex
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub getFile
 {
     my $file = $Jobname . ".xls";
@@ -364,8 +424,7 @@ sub getFile
     return undef;
 }
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub parseSource
 {
     my ($string, $type) = @_;
@@ -417,14 +476,12 @@ sub parseSource
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub writeBuf
 {
     my ($type, $idx, $string, $source) = @_;
+    return 1 if ($string eq "");
 
-    # empty string is ok, but we dont need to write it then
-    return 1 if (! defined($string));
     my $wfile;
 
     if (! defined($idx)) { $wfile = $inputDir . "/" . $type . "-" . $source }
@@ -437,14 +494,13 @@ sub writeBuf
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub getWorkbook
 {
     my ($file) = @_;
 
     if (! -f $file) {
-	print STDERR "can not read '$file': it does not exists.\n";
+	print STDERR "can't read '$file': it does not exists.\n";
 	exit_error();
     }
 
@@ -465,8 +521,7 @@ sub getWorkbook
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub texifyCell
 {
     my ($cel) = @_;
@@ -477,31 +532,46 @@ sub texifyCell
     return "" if (! defined($string) || $string eq "");
 
     # escape latex control characters
-    $string =~ s/%/\\%/g;  
-    $string =~ s/#/\\#/g;  
-    $string =~ s/_/\\_/g;  
-    $MATH = 1 if ($string =~ s/\^/\\hat{}/g);
+    $string =~ s/\{/\\\{/g;
+    $string =~ s/\}/\\\}/g;
+    # escape backslash if not followed by { or }
+    $string =~ s/\\(?!({|}))/\\ensuremath\{\\backslash\}/g;
+    $string =~ s/#/\\#/g;
+    $string =~ s/\$/\\\$/g;
+    $string =~ s/%/\\%/g;
+    $string =~ s/&/\\&/g;
+    $string =~ s/~/\\~/g;
+    $string =~ s/_/\\_/g;
+    $string =~ s/\^/\{\\verb ^ \}/g;
 
-    # simplify scientific numbers if not requested otherweise
-    if (! $noMath)
+    # hack for EUR sign, works for me but is definetly ugly :(
+    $string =~ s/\[.+\xac-{0,1}\d{1,3}\]/$euroSymbol/g;  # EUR in currency cells
+    $string =~ s/.{1,1}\xac/$euroSymbol/g;               # single EUR sign
+   
+    # use decimal comma if requested
+    $string =~ s/(\d)\.(\d)/$1,$2/g if ($optComma == 1);
+    
+    # reformat scientific numbers if requested
+    if ($optFmtSci == 1)
     {
 	$MATH =  1 if ($string =~ s/([0-9]+)[eE]([+-][0-9]+)/
 		       simplifyScientificNumber($1, $2)/ge);
     }
 
     # apply cell formatting and colors if not requested otherweise
-    $string = applyFormatting($string, $cel, $MATH) if(! $noFormat);
+    $string = applyFormatting($string, $cel, $MATH) if($optFormat == 1);
 
     # same goes for colors
-    $string = applyColor($string, $cel) if (! $noColor);
+    $string = applyColor($string, $cel) if ($optColor == 1);
+
+    util::DEBUG "  texified => '$string'";
 
     return "\$$string\$" if ($MATH);
     return $string;
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub applyFormatting
 {
     my ($s, $c, $m) = @_;
@@ -509,7 +579,7 @@ sub applyFormatting
     # font bold?
     if    ($c->{bold} && $m) { $s = "\\mathbf{$s}"; }
     elsif ($c->{bold})       { $s = "\\textbf{$s}"; }
-    
+
     # font italic?
     if    ($c->{italic} && $m) { $s = "\\mathit{$s}"; }
     elsif ($c->{italic})       { $s = "\\textit{$s}"; }
@@ -517,13 +587,12 @@ sub applyFormatting
     # underlined? striked out?
     $s = "\\uline{$s}" if ($c->{underline});
     $s = "\\sout{$s}"  if ($c->{strikeout});
-    
+
     return $s;
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub applyColor
 {
     my ($s, $c) = @_;
@@ -531,29 +600,28 @@ sub applyColor
     # dont use color, if font is black anyway
     if ($c->{color} != 8)
     {
-	# convert aabbcc hex color to float rgb
+	# convert rrggbb hex color triplet to float rgb
   	$s = "\\textcolor[rgb]{" . colormap($c->{color}) . "}{$s}";
     }
 
     return $s;
 }
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub colormap
 {
     my ($color) = @_;
 
-    util::DEBUG("color: $color\n");
+    util::DEBUG("  color => $color\n");
 
+    # get rgb triplet as floats
     return join(', ', map {hex($_)/255.0}
 	    unpack('a2a2a2', Spreadsheet::ParseExcel->ColorIdxToRGB($color)));
 }
 
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub simplifyScientificNumber
 {
     my ($f, $e) = @_;
@@ -570,8 +638,7 @@ sub simplifyScientificNumber
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub warning
 {
     my ($msg) = @_;
@@ -582,8 +649,7 @@ sub warning
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub getCellString
 {
     my ($file, $sheet, $cell) = @_;
@@ -598,7 +664,7 @@ sub getCellString
 	warning("cell '$cell' is invalid\n");
 	return undef;
     }
-    
+
     my $c = $w->getCell($sheet, $x, $y);
     warning($w->error()) if (! defined($c->{value}));
 
@@ -608,8 +674,7 @@ sub getCellString
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub getTabString
 {
     my ($file, $sheet, $cell1, $cell2) = @_;
@@ -618,7 +683,7 @@ sub getTabString
     # of the selected cell-range
     my ($lfx, $upy) = util::cell2xy($cell1);
     my ($rtx, $loy) = util::cell2xy($cell2);
-    
+
     if (! defined($lfx))
     {
 	warning "cell '$cell1' is invalid\n";
@@ -629,18 +694,18 @@ sub getTabString
 	warning "cell '$cell2' is invlaid\n";
 	return undef;
     }
-    
+
     my $book = getWorkbook($file);
     my $buf;
-    
+
     my $empty = 1;
-    
+
     for (my $y = $upy; $y <= $loy; ++$y)
     {
 	for (my $x = $lfx; $x <= $rtx; ++$x)
 	{
 	    my $c = $book->getCell($sheet, $x, $y);
-	    
+
 	    warning($book->error()) if (! defined($c));
 	    $empty = 0 if(defined($c->{value}));
 	    $buf .= texifyCell($c);
@@ -648,9 +713,9 @@ sub getTabString
 	}
 	$buf .= " \\\\\n";
     }
-    
+
     warning("table $cell1!$cell2 is empty\n") if ($empty);
-    
+
     ++$nItems;
     ++$nTabs;
     return $buf;
@@ -660,16 +725,15 @@ sub getTabString
 
 
 
-#*******************************************************************************
-#*******************************************************************************
-#*******************************************************************************
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 package readExcel;
 
 use strict;
 use Spreadsheet::ParseExcel;
+use Encode;
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub new
 {
     my ($class, $file) = @_;
@@ -679,31 +743,32 @@ sub new
 
     if (! -f $file)
     {
-	print STDERR "cannot read '$file', it does not exists.\n";
+	print STDERR "can't read '$file', it does not exists.\n";
 	exit_error();
     }
 
-    $self->{book} =  Spreadsheet::ParseExcel::Workbook->Parse($file);
+    $self->{book} = 
+    Spreadsheet::ParseExcel::Workbook->Parse($file);
+
     if (! defined($self->{book}))
     {
 	print STDERR "SpreadSheet::ParseExcel Error: "
-	    . "can not parse '$file' : $!\n";
+	    . "can't parse '$file' : $!\n";
 	exit_error();
     }
-    
+
     $self->{file} = $file;
     bless $self, $class;
-    
+
     return $self;
 }
 
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub getCell
 {
     my ($self, $sheet, $x, $y) = @_;
-    
+
     my $ws = $self->{book}->Worksheet($sheet);
     if (! defined($ws))
     {
@@ -721,8 +786,12 @@ sub getCell
 	return { value => undef }
     }
 
+    # we're internally operating with utf8, for now
+    my $value = encode_utf8($cell->Value());
+    util::DEBUG "  value => '$value'";
+
     # return hash containing value and formatting
-    return { value     => $cell->Value(),
+    return { value     => $value,
 	     bold      => $cell->{Format}->{Font}->{Bold},
 	     italic    => $cell->{Format}->{Font}->{Italic},
 	     color     => $cell->{Format}->{Font}->{Color},
@@ -731,8 +800,8 @@ sub getCell
 	   };
 }
 
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub _setError
 {
     my ($self, $err) = @_;
@@ -740,9 +809,7 @@ sub _setError
 }
 
 
-
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 sub error
 {
     my $self = shift;

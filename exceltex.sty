@@ -1,28 +1,25 @@
-% $Id: exceltex.sty 113 2006-02-18 12:01:19Z pez $
+% $Id: exceltex.sty 142 2006-03-09 23:52:12Z pez $
 %
-% allows easy access to Excel(TM) files from within LaTeX.
+% access to Excel files from LaTeX
 %
 % (c) 2004-2006 by Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>
 %
 % exceltex is free software. you can redistribute or modify it under
-% the terms of the GNU GENERAL PUBLIC LICENSE. See COPYING for
+% the terms of the GNU GENERAL PUBLIC LICENSE Version 2. See COPYING for
 % details.
 %
-\def\exceltexVersion{0.4.0}
-\def\exceltexDate{2006/02/17}
+\def\exceltexVersion{0.5.0}
 %
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{exceltex}[\exceltexDate \exceltexVersion]
+\ProvidesPackage{exceltex}[2006/03/04 v.\exceltexVersion]
 \DeclareOption{cellrefs}{\def\cellrefs{1}}
 \ProcessOptions
 %
-\typeout{This is exceltex \exceltexDate v. \exceltexVersion}
-%
-% need to find a way to disable use of ulem
-% and color
+\typeout{This is exceltex  v\exceltexVersion}
 % ulem needs option normalem for not breaking \em and \emph
 \RequirePackage[normalem]{ulem}
 \RequirePackage{color}
+%\RequirePackage{eurosym}
 %
 \newcounter{exceltexCounterC}\setcounter{exceltexCounterC}{0}
 \newcounter{exceltexCounterT}\setcounter{exceltexCounterT}{0}
