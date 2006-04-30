@@ -1,3 +1,10 @@
+exceltex (0.5.1-1) unstable; urgency=low
+
+  * minor fixes
+  * documentation updates
+
+ -- Hans-Peter Doerr <doerr@cip.physik.uni-freiburg.de>  Sun, 30 Apr 2006 13:41:44 +0200
+
 exceltex (0.5.0-1) unstable; urgency=low
 
   * changed commandline interface

@@ -1,12 +1,20 @@
 .\" 
-.TH "exceltex" "1" "March 10, 2006" "version 0.5.0" ""
+.TH "exceltex" "1" "April 26, 2006" "version 0.5.1" ""
 .SH "NAME"
-exceltex \- include data from Excel files into LaTeX
+exceltex \- get data from Excel files into LaTeX
 .SH "SYNOPSIS"
 .B exceltex [options] file[.tex]
 
 .SH "DESCRIPTION"
-Exceltex is a LaTeX package combined with a helper program written in Perl, wich makes it easy to include tabulars and cells from excel files in LaTeX documents.
+.TP
+Exceltex is a LaTeX package combined with a helper program written in Perl. It provides a easy to use yet powerfull and flexible way to get data from Spreadsheets into LaTeX. 
+
+.TP
+In difference to other existing solutions, exceltex does not seek for making the creation of tables in LaTeX easier, but to get data from Spreadsheets in into LaTeX as easy as possible.
+
+.TP
+The excel fileformat acts as an interface between the spreadsheet application and exceltex beacause it is easily accessible via the Spreadsheet::ParseExcel Perl module and because most spreadsheet applications are able to read and write excel files.
+
 .SH "OPTIONS"
 .TP 
 \-h|\-\-help
@@ -42,12 +50,15 @@ set encoding to enc. Currently supported encodings are: latin1, latin9, utf8 [la
 \-p|\-\-plain
 shorthand for \-\-noformat \-\-nocolor \-\-noreformat\-sn
 
+.TP
+Exceltex should work right out of the box in most cases without specifying any options.
 
 .SH "LATEX COMMANDS"
 .PP 
-The exceltex package provides two macros to include data from singe cells and cell ranges. 
+The exceltex LaTeX package provides two macros to include data from singe cells and cell ranges. 
 .TP 
 .B \\\inccell{foo.xls!results!B9}
+
 includes cell
 .B B9
 from sheet
@@ -57,6 +68,7 @@ in file
 
 .TP 
 .B \\\inctab{foo.xls!results!B2!C15}
+
 includes the 14 rows between
 .B B2
 and
@@ -65,14 +77,14 @@ from sheet
 .B results
 in file
 .B foo.xls
-in LaTeX' tabular format.
+in LaTeX' tabular format ('&' separated columns ended by '\\\\').
 
 .TP 
 For both commands you may omit to specify the filename (foo.xls) if it has the same basename (foo) as the LaTeX file (foo.tex).
 
 .SH "EXAMPLE"
 .TP 
-The following is a minimal example for using exceltex.
+The following LaTeX code demonstrates the useage of exceltex.
 
 \\documentclass{article}
 .br 
@@ -117,6 +129,9 @@ Exceltex exits with status 0 on Success, status 1 if any warning occured and sta
 .TP 
 Exceltex depends on the perl module \fISpreadsheet::ParseExcel\fR and the LaTeX Packages \fIulem\fR and \fIcolor\fR.
 
+.TP
+Currently a Unix like operating system is required, cygwin on windows should work also.
+
 .SH "PROBLEMS"
 * not all Excel files are supported, see Spreadsheet::ParseExcel documentation for details.
 
@@ -126,11 +141,13 @@ Exceltex depends on the perl module \fISpreadsheet::ParseExcel\fR and the LaTeX 
 .SH "FILES"
 .TP 
 .B .exceltexrc
-You can set defaults for all options in global ($HOME/.exceltexrc) or project specific (.exceltexrc) configuration files. For example, just put the following two lines in $HOME/.exceltexrc to set the default encoding to utf8 and use \\euro{} as euro symbol:
+You can set defaults for all options in global ($HOME/.exceltexrc) or project specific (.exceltexrc) configuration files. For example, just put the following two lines in $HOME/.exceltexrc to set the default encoding to utf8 and use the \\euro{} macro (from the eurosym package) for the euro symbol:
 
 encoding=utf8
 .br 
 euro-symbol=\\euro{}
+.TP
+Settings from the config files will be overwritten by commandline switches.
 
 .SH "IN THE WEB"
 .TP

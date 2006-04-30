@@ -1,12 +1,21 @@
 .\" 
-.TH "exceltex" "1" "10. MÃ¤rz, 2006" "version 0.5.0" ""
+.TH "exceltex" "1" "26. April, 2006" "version 0.5.1" ""
+
 .SH "NAME"
-exceltex \- Daten aus Exceldateien in LaTeX einfÃ¼gen
+exceltex \- Daten aus Exceldateien in LaTeX einfügen
 .SH "BENUTZUNG"
 .B exceltex [optionen] file[.tex]
 
 .SH "BESCHREIBUNG"
-Exceltex besteht aus einem LaTeX Paket und einem Perlskript, womit man sehr einfach Daten aus Exceldateien in LaTeX Dokumente einfÃ¼gen kann.
+.TP
+Exceltex bietet eine einfach zu benutzende und sehr flexible Möglichkeit um Daten aus einer Tabellenkalkulation in LaTeX Dokumente einzufügen. Es besteht aus einem LaTeX Paket sowie einem Perlskript als Hilfsprogramm.
+
+.TP
+Im Unterschied zu anderen Lösungen versucht Exceltex nicht das erstellen von Tabellen in LaTeX zu vereinfachen, sondern das synchronisieren von Daten zwischen Tabellenkalkulation und LaTeX so einfach wie möglich zu machen.
+
+.TP
+Das Exceldateiformat dient dabei nur als Schnittstelle zwischen Tabellenkalkulation und exceltex, da es über das Perlmodul Spreadsheet::ParseExcel einfach zugänglich ist und ausserdem von praktisch jedem Tabellenkalkulationsprogramm gelesen und geschrieben werden kann.
+
 .SH "OPTIONEN"
 .TP 
 \-h|\-\-help
@@ -16,7 +25,7 @@ zeigt diese Hilfe
 zeigt Programmversion
 .TP 
 \-c|\-\-cleanup
-loescht von exceltex angelegte Dateien
+löscht von exceltex angelegte Dateien
 .TP 
 \-i|\-\-ignore\-warnings
 immer mit Status 0 beenden, auch bei Warnungen
@@ -25,13 +34,13 @@ immer mit Status 0 beenden, auch bei Warnungen
 Verwende sym als EUROsymbol [EUR]. Am besten \\usepackage{eurosym} verwenden und sym auf \\euro{} setzen.
 .TP 
 \-e|\-\-encoding=enc
-Zeichensatz auf enc setzen. Derzeit unterstÃ¼tzte ZeichensÃ¤tze sind: latin1, latin9, utf8 [latin1]
+Zeichensatz auf enc setzen. Derzeit unterstützte Zeichensätze sind: latin1, latin9, utf8 [latin1]
 .TP 
 \-\-[no]reformat\-sn
 (nicht) Zahlen in Wissenschaftlicher Notation auf die From A X 10^B umschreiben
 .TP 
 \-\-[no]comma
-(kein) Komma fuer Dezimalzahlen verwenden
+(kein) Komma für Dezimalzahlen verwenden
 .TP 
 \-\-[no]format
 (keine) Formatierungen verwenden
@@ -40,8 +49,11 @@ Zeichensatz auf enc setzen. Derzeit unterstÃ¼tzte ZeichensÃ¤tze sind: latin1, la
 (keine) Farben verwenden
 .TP 
 \-p|\-\-plain
-Abkuerzung fÃ¼r \-\-noformat \-\-nocolor \-\-noreformat\-sn
+Abkürzung für \-\-noformat \-\-nocolor \-\-noreformat\-sn
 
+
+.TP
+Exceltex sollte in den meisten Fällen ohne Verwendung von Optionen das gewünschte Ergebnis bringen.
 
 .SH "LATEX KOMMANDOS"
 .PP 
@@ -49,7 +61,8 @@ Exceltex bietet zwei Kommandos um auf einzelne Zellen und auf Tabellen zuzugreif
 
 .TP 
 .B \\\inccell{bla.xls!Ergebnisse!B9}
-fÃ¼gt Zelle
+
+fügt Zelle
 .B B9
 vom Arbeitsblatt
 .B Ergebnisse
@@ -59,7 +72,8 @@ ein.
 
 .TP 
 .B \\\inctab{bla.xls!Ergebnisse!B2!C15}
-FÃ¼gt die 14 Zeilen zwischen
+
+fügt die 14 Zeilen zwischen
 .B B2
 (oben links) und
 .B F15
@@ -68,14 +82,14 @@ aus dem Arbeitsblatt
 .B Ergebnisse
 der Datei
 .B bla.xls
-ein.
+in LaTeX' Tabellenformat (mit '&' getrennte Spalten und mit '\\\\' abgeschlossene Zeilen) ein.
 
 .TP 
 Bei beiden Kommandos kann die Angabe des Dateinamens auch entfallen, falls er, abgesehen von der Endung, gleich dem der LaTeXdatei ist.
 
 .SH "BEISPIEL"
 .TP 
-Der folgene LaTeX Code ist ein Minimalbeispiel fÃ¼r die Verwendung von exceltex:
+Der folgene LaTeX Code ist ein Minimalbeispiel für die Verwendung von exceltex:
 
 \\documentclass{article}
 .br 
@@ -113,26 +127,36 @@ Jetzt latex aufrufen dann exceltex und nochmal latex.
 Exceltex beendet mit Status 0 falls keine Fehler oder Warnungen aufgetreten sind. Bei Warnungen beendet es mit 1, nach Fehlern mit 2. 
 
 .SH "ANFORDERUNGEN"
-Exceltex benÃ¶tigt das Perlmodul \fISpreadsheet::ParseExcel\fR und die LaTeX Pakete \fIulem\fR und \fIcolor\fR.
+.TP
+Exceltex benötigt das Perlmodul \fISpreadsheet::ParseExcel\fR und die LaTeX Pakete \fIulem\fR und \fIcolor\fR.
+
+.TP
+Derzeit werden nur Unix ähnliche Betriebsysteme unterstützt, Cygwin unter Windows sollte aber auch funktionieren.
+
 
 .SH "PROBLEME"
+.TP
 * Prinzipbedingt kann \fISpreadSheet::ParseExcel\fR nur mit solchen Dateien etwas anfangen, bei denen neben den Formeln auch die berechneten Werte mit abgespeichert sind. Dies muss aber nicht unbedingt der Fall sein siehe dazu auch die Dokumentation zu \fISpreadSheet::ParseExcel\fR
-
-* Sonderzeichen die in Tex nur Ã¼ber Macros zugÃ¤nglich sind (griechische Symbole, etc.) werden nicht unterstÃ¼tzt.
-
-* Dateinamen und Arbeitsmappen dÃ¼rfen keine fÃ¼r LaTeX problematischen Zeichen enthalten (^,_,#,{,},!), Das Ausrufezeichen wird von Exceltex als Trennsymbol verwendet. Am besten einfach nur Buchstaben, Zahlen und Bindestrich verwenden.
+.TP
+* Sonderzeichen die in Tex nur über Macros zugänglich sind (griechische Symbole, etc.) werden nicht unterstützt.
+.TP
+* Dateinamen und Arbeitsmappen dürfen keine für LaTeX problematischen Zeichen enthalten (^,_,#,{,},!), Das Ausrufezeichen wird von Exceltex als Trennsymbol verwendet. Am besten einfach nur Buchstaben, Zahlen und Bindestrich verwenden.
 
 .SH "DATEIEN"
+.TP
 .B .exceltexrc
-alle Kommadozeilenschalter kÃ¶nnen auch fest in Konfigurationsdateien eingetragen werden, und zwar Global ind $HOME/.exceltexrc oder projektbezogen im aktuellen Verzeichnis in .exceltexrc. Schreibe einfach folgende Zeilen in $HOME/.exceltexrc um immer utf8, und \\euro{} als Eurosymbol zu verwenden:
+alle Kommadozeilenschalter können auch fest in Konfigurationsdateien eingetragen werden, und zwar Global in $HOME/.exceltexrc oder Projektbezogen im aktuellen Verzeichnis in .exceltexrc. Schreib einfach folgende Zeilen in $HOME/.exceltexrc um immer utf8, und \\euro{} als Eurosymbol zu verwenden:
 
 encoding=utf8
 .br
 euro-symbol=\\euro{}
 
+.TP
+Optionen aus den Konfigurationsdateien werden von Komandozeilenschaltern überschrieben.
+
 .SH "WEITERE INFORMATIONEN"
 .TP
-Die neueste Version und weitere Informationen zu exceltex gibt es unter http://www.physik.uni-freiburg.de/Â¨doerr/exceltex
+Die neueste Version und weitere Informationen zu exceltex gibt es unter http://www.physik.uni-freiburg.de/~doerr/exceltex
 
 .SH "COPYRIGHT"
 .TP 

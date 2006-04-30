@@ -1,51 +1,35 @@
-ABOUT
-^^^^^
-Exceltex is a LaTeX package combinded with a helper program written in
-perl, which makes it easy to include tabulars and cells from excel
-files in LaTeX documents.
+    ABOUT
+
+Exceltex is a LaTeX package combined with a helper program written in
+Perl. It provides a easy to use yet powerfull and flexible way to get
+data from Spreadsheets into LaTeX.
+
+In difference to other existing solutions, exceltex does not seek for
+making the creation of tables in LaTeX easier, but to get data from
+Spreadsheets in into LaTeX as easy as possible.
+
+The excel fileformat acts as an interface between the spreadsheet
+application and exceltex beacause it is easily accessible via the
+Spreadsheet::ParseExcel Perl module and because most spreadsheet
+applications are able to read and write excel files.
 
 
-There are already existing a bunch of solutions for the Problem of
-including Tabulars from Spreadsheet Applications in LaTeX, of which
-most are Macros for Excel or OO.org which are able to export marked
-cells or worksheets to LaTeX code.
-
-But exceltex pursues a different aim and a different approach. Because
-I did most of the calculations for my studies with the Gnumeric
-spreadsheet application, i wantet something which provides:
-
-   * easy but still flexible acces to cells and cell ranges with
-     LaTeX, and
-   * no need to care about syncing changes between spreadsheet and
-     LaTeX file
-
-Exceltex does both jobs quite well (for me). The LaTeX package
-provides two macros \inccell{} and \inctab{} and the helper program
-exceltex actually exctracts the ordered data from the excel file, just
-as bibtex works, for example.
-
-But why the need for using excel files on Linux/Unix? Because there is
-the Spreadsheet::ParseExcel Perl module which makes it quite easy to
-read excel files, and my favourite Spreadsheet application Gnumeric
-handles excel files almost just as good as it's native format, while
-there was and is no Perl module for accessing Gnumeric files anyway
-(because Gnumeric unfortunately doesn't save results of calculations
-in it's files).
 
 
-REQIREMENTS
-^^^^^^^^^^^
-The exceltex helper script uses the Spreadsheet::ParseExcel Module to
-actually read the Excel files.
-For formatting stuff the LaTeX Packages ulem and color are used.
+    REQIREMENTS
 
-Exceltex is beeing developed and tested on Linux. Due to filename/path
-issues it will not run "out of the box" on Windows or any other
-non-Unix like Operating System.
+Exceltex depends on the perl module Spreadsheet::ParseExcel and the
+LaTeX Packages ulem and color.
+
+Currently a Unix like operating system is required, cygwin on windows
+should work also.
 
 
-LATEX COMMANDS
-^^^^^^^^^^^^^^
+
+
+
+    LATEX COMMANDS
+
 Exceltex provides two commands to include single cells and cell-ranges
 for tabulars. Load the exceltex LaTeX package via
 \usepackage{exceltex}.
@@ -64,16 +48,11 @@ the same basename (foo) as the LaTeX file (foo.tex).
 
 
 
-USAGE
-^^^^^
+    USAGE
+
 Mark cells and tabulars for inclusion with the \incell and \inctab
 commands. Then run latex, exceltex and latex again.
 
-
-
-
-EXAMPLES
-^^^^^^^^
 The following Example demonstrates the usage of exceltex:
 
 --- snip ---
@@ -114,18 +93,15 @@ in LaTeX' tabular format - colums are separated with a '&', each line
 is endet with a line break (\\). This gives you a maximum of
 flexibility and the freedom to use whatever tabular package you want.
 
-You can force to disable formatting and coloring of cells with the -f
-resp. -n commandline switches.
 
 Currently one package option is supported.
 \usepackage[cellrefs]{exceltex} will write cell data to files named by
-filename, workbook and cell instead of sequentially numbered
-files.
+filename, workbook and cell instead of sequentially numbered files.
 
 
 
-PROBLEMS
-^^^^^^^^
+
+    PROBLEMS
 
 * Exceltex cannot read Excel files created by Spreadsheet::WriteExcel
   (see Spreadsheet::ParseExcel documentatin for details).
@@ -142,8 +118,8 @@ PROBLEMS
 
 
 
-HOW IT WORKS
-^^^^^^^^^^^^
+    HOW IT WORKS
+
 The first LaTeX run writes an entry for each \inctab, \inccell command
 to a spearate index file (\jobname.exltx). This index is then read by
 the exceltex helper script, which actually extracts the ordered data
@@ -154,8 +130,8 @@ these files via a \InputIfExists{} command on the following latex runs.
 
 
 
-TODO
-^^^^
+    TODO
+
 Support for other formats than excels would be appreciating. There is
 maybe a chance to get OpenOffice Calc working. There is now a module
 OpenOffice::Parse::SXC on cpan which could to the job for Openoffice,
@@ -171,8 +147,8 @@ http://www.physik.uni-freiburg.de/~doerr/exceltex
 
 
 
-COPYING
-^^^^^^^
+    COPYING
+
 exceltex is Copyright 2004-2006 by Hans-Peter Doerr
 <doerr@cip.physik.uni-freiburg.de>
 
@@ -184,3 +160,5 @@ exceltex is distributed under the terms of the Gnu General Public
 License (GPL) Version 2.  See COPYING for details.
 
 
+
+README for exceltex version 0.5.1, Apr 30, 2006
