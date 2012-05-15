@@ -1,3 +1,7 @@
+* 0.5.2 (2012-05-15)
+  - changed license to MIT X11
+  - don't use the stupid hard-coded file descriptor anymore (yay!)
+
 * 0.5.1
   - documentation updates
   - minor bugfixes

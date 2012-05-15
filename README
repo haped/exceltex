@@ -1,4 +1,4 @@
-    ABOUT
+ABOUT
 
 Exceltex is a LaTeX package combined with a helper program written in
 Perl. It provides a easy to use yet powerfull and flexible way to get
@@ -14,9 +14,7 @@ Spreadsheet::ParseExcel Perl module and because most spreadsheet
 applications are able to read and write excel files.
 
 
-
-
-    REQIREMENTS
+REQIREMENTS
 
 Exceltex depends on the perl module Spreadsheet::ParseExcel and the
 LaTeX Packages ulem and color.
@@ -25,10 +23,7 @@ Currently a Unix like operating system is required, cygwin on windows
 should work also.
 
 
-
-
-
-    LATEX COMMANDS
+LATEX COMMANDS
 
 Exceltex provides two commands to include single cells and cell-ranges
 for tabulars. Load the exceltex LaTeX package via
@@ -46,9 +41,7 @@ For both commands you may omit specifying the file (foo.xls) if it has
 the same basename (foo) as the LaTeX file (foo.tex).
 
 
-
-
-    USAGE
+USAGE
 
 Mark cells and tabulars for inclusion with the \incell and \inctab
 commands. Then run latex, exceltex and latex again.
@@ -99,9 +92,7 @@ Currently one package option is supported.
 filename, workbook and cell instead of sequentially numbered files.
 
 
-
-
-    PROBLEMS
+PROBLEMS
 
 * Exceltex cannot read Excel files created by Spreadsheet::WriteExcel
   (see Spreadsheet::ParseExcel documentatin for details).
@@ -115,10 +106,7 @@ filename, workbook and cell instead of sequentially numbered files.
   limitations, i think.
 
 
-
-
-
-    HOW IT WORKS
+HOW IT WORKS
 
 The first LaTeX run writes an entry for each \inctab, \inccell command
 to a spearate index file (\jobname.exltx). This index is then read by
@@ -128,9 +116,7 @@ and writes it to sequentially numbered files in the directory
 these files via a \InputIfExists{} command on the following latex runs.
 
 
-
-
-    TODO
+TODO
 
 Support for other formats than excels would be appreciating. There is
 maybe a chance to get OpenOffice Calc working. There is now a module
@@ -145,20 +131,12 @@ The newest version of Exceltex is available at the following url:
 http://www.physik.uni-freiburg.de/~doerr/exceltex
 
 
+COPYING
+
+exceltex is Copyright 2004-2012 by Hans-Peter Doerr
+
+exceltex is distrubuted under the termes of the MIT X11 license, see:
+http://www.opensource.org/licenses/mit-license.php
 
 
-    COPYING
-
-exceltex is Copyright 2004-2006 by Hans-Peter Doerr
-<doerr@cip.physik.uni-freiburg.de>
-
-This is free software; see the source for copying conditions.  There
-is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.
-
-exceltex is distributed under the terms of the Gnu General Public
-License (GPL) Version 2.  See COPYING for details.
-
-
-
-README for exceltex version 0.5.1, Apr 30, 2006
+README for exceltex version 0.5.2, May 15, 2012
