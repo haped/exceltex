@@ -24,24 +24,26 @@
 \newcounter{exceltexCounterC}\setcounter{exceltexCounterC}{0}
 \newcounter{exceltexCounterT}\setcounter{exceltexCounterT}{0}
 %
-\immediate\openout 10=\jobname.excltx
+%%% open exceltex index, write header
+\newwrite\exceltex@index
+\immediate\openout\exceltex@index=\jobname.excltx
 %
 %
 % write index header
 \ifx\cellrefs\undefined
 %
 \else
-\immediate\write 10{;cellrefs}
+\immediate\write\exceltex@index{;cellrefs}
 \fi
-\immediate\write 10{;created by exceltex v. \exceltexVersion}
+\immediate\write\exceltex@index{;created by exceltex v. \exceltexVersion}
 %
 \newcommand{\inccell}[1]{%
   \stepcounter{exceltexCounterC}%
   \ifx\cellrefs\undefined%
-  \immediate\write 10{c:\theexceltexCounterC:#1}%
+  \immediate\write\exceltex@index{c:\theexceltexCounterC:#1}%
   \InputIfFileExists{\jobname-excltx/c-\theexceltexCounterC}{}{}%
   \else
-  \immediate\write 10{c:#1}%
+  \immediate\exceltex@index{c:#1}%
   \InputIfFileExists{\jobname-excltx/c-#1}{}{}%
   \fi
 }%
@@ -50,10 +52,10 @@
 \newcommand{\inctab}[1]{%
   \stepcounter{exceltexCounterT}%
   \ifx\cellrefs\undefined%
-  \immediate\write 10{t:\theexceltexCounterT:#1}%
+  \immediate\exceltex@index{t:\theexceltexCounterT:#1}%
   \InputIfFileExists{\jobname-excltx/t-\theexceltexCounterT}{}{\\}%
   \else
-  \immediate\write 10{t:#1}%
+  \immediate\exceltex@index{t:#1}%
   \InputIfFileExists{\jobname-excltx/t-#1}{}{\\}%
   \fi
 }%
